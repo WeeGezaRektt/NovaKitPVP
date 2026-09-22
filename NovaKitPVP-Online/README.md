@@ -58,3 +58,9 @@ Notes:
 - Combat rank names are now Combat GrandMaster, Combat Master, Combat Ace, Combat Specialist, Combat Cadet, Combat Novice, and Rookie.
 - Overall scoring now counts the strongest achieved tier per kit. A current HT2 with peak HT1 contributes 60 points.
 - Individual kit pages show active tiers only; retired tiers remain available on Overall/profile context.
+
+
+## V7 kit page layout
+- Separate kit pages use five columns: Tier 1 through Tier 5.
+- Only active tiers appear on kit pages. HT players are listed before LT players within each tier.
+- Overall active tier icons now have tier-colored rings; retired tier icons use a neutral grey ring.

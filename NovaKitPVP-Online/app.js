@@ -93,18 +93,26 @@ function playerRow(p,i){
   return `<button class="player-row ref-player-row ${i<3?'top'+place:''}" data-player="${p.id}"><span class="rank-strip"><span class="place">${place}.</span><span class="body-render">${bodyImg(p,86,p.name)}</span></span><span class="ident"><span><strong>${esc(p.name)}</strong><span class="subline"><span class="rank-chip ref-rank"><i>${iconMarkup(rank.icon,'rank-icon')}</i>${esc(rank.name)} <em>(${pts} points)</em></span></span></span></span><span class="row-region">${region(p.region)}</span><span class="tiers ref-tiers">${overallBadges(p)}</span></button>`;
 }
 function renderMode(g){
-  $('#eyebrow').textContent=`${g.name.toUpperCase()} RANKINGS`;$('#title').textContent=g.name;$('#subtitle').textContent=`Players ranked in ${g.name}.`;
+  $('#eyebrow').textContent=`${g.name.toUpperCase()} RANKINGS`;$('#title').textContent=g.name;$('#subtitle').textContent=`Active ${g.name} tiers, grouped Tier 1 through Tier 5.`;
   const q=$('#search').value.trim().toLowerCase();
   const ranked=players.filter(p=>{const t=rowForMode(p,g);return t&&t.active_tier&&t.active_tier!=='Unranked'}).filter(p=>!q||p.name.toLowerCase().includes(q));
-  const groups=[];
-  for(const tier of ACTIVE_TIERS.filter(t=>t!=='Unranked')){
-    const group=ranked.filter(p=>rowForMode(p,g)?.active_tier===tier).sort((a,b)=>totalPoints(b)-totalPoints(a));
-    if(group.length)groups.push({label:tier,type:'active',players:group});
-  }
-  $('#content').innerHTML=`<div class="mode-groups">${groups.length?groups.map(x=>`<section class="tier-group"><h3>${tierBadge(x.label,'active')} <span>${esc(x.label)}</span><span class="muted">${x.players.length} player${x.players.length===1?'':'s'}</span></h3><div class="tier-grid">${x.players.map(p=>modeCard(p,g)).join('')}</div></section>`).join(''):'<div class="empty">No active ranked players in this gamemode yet.</div>'}</div>`;
+  const columns=[1,2,3,4,5].map(n=>{
+    const ht=`HT${n}`,lt=`LT${n}`;
+    const members=ranked.filter(p=>{const t=rowForMode(p,g)?.active_tier;return t===ht||t===lt}).sort((a,b)=>{
+      const ta=rowForMode(a,g)?.active_tier,tb=rowForMode(b,g)?.active_tier;
+      if(ta!==tb)return ta===ht?-1:1;
+      return totalPoints(b)-totalPoints(a)||a.name.localeCompare(b.name);
+    });
+    return {n,members};
+  });
+  const hasAny=columns.some(c=>c.members.length);
+  $('#content').innerHTML=hasAny?`<div class="kit-tier-board">${columns.map(c=>`<section class="kit-tier-column tier-${c.n}"><header><span class="tier-trophy">${c.n===1?'🏆':'♜'}</span><strong>Tier ${c.n}</strong></header><div class="kit-tier-list">${c.members.length?c.members.map(p=>modeTierRow(p,g)).join(''):`<div class="kit-tier-empty">No players</div>`}</div></section>`).join('')}</div>`:'<div class="empty">No active ranked players in this gamemode yet.</div>';
   bindProfiles();
 }
-function modeCard(p,g){const t=rowForMode(p,g);let badge=t.active_tier&&t.active_tier!=='Unranked'?tierBadge(t.active_tier):'';return `<button class="mode-card" data-player="${p.id}">${headImg(p,56,p.name)}<span class="grow"><strong>${esc(p.name)}</strong><small>${esc(rankFor(totalPoints(p),assets).name)} · ${totalPoints(p)} pts</small></span>${region(p.region)}${badge}</button>`}
+function modeTierRow(p,g){
+  const t=rowForMode(p,g),tier=t?.active_tier||'Unranked',side=tier.startsWith('HT')?'ht':'lt';
+  return `<button class="kit-tier-player ${side}" data-player="${p.id}">${headImg(p,42,p.name)}<span class="grow"><strong>${esc(p.name)}</strong></span><span class="kit-tier-code ${tier.toLowerCase()}">${esc(tier)}</span><span class="kit-tier-chevron">⌃</span></button>`;
+}
 function bindProfiles(){document.querySelectorAll('[data-player]').forEach(b=>b.onclick=()=>openProfile(players.find(p=>p.id===b.dataset.player)))}
 function positionBadge(place){return `<span class="profile-position-badge ${place===1?'gold':place===2?'silver':place===3?'bronze':''}">${place||'—'}.</span>`}
 function openProfile(p){
