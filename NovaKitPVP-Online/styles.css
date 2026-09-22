@@ -24,3 +24,13 @@
 .asset-file::file-selector-button:hover{border-color:#5a3b64;color:#fff}
 .asset-flag{display:inline-flex;align-items:center;gap:5px;font-size:10px;color:#8f8293}
 .asset-flag b{color:#e6d9ea}
+
+
+/* V5 overall kit tier icons + profile point breakdown */
+.overall-tier-icon{position:relative;width:30px;min-width:30px;height:30px;padding:4px;border-radius:8px;overflow:visible;cursor:help}
+.overall-tier-icon .asset-icon,.overall-tier-icon img{width:20px;height:20px;max-width:20px;max-height:20px;object-fit:contain;display:block}
+.overall-tier-icon::after{content:attr(data-tier-tip);position:absolute;left:50%;bottom:calc(100% + 9px);transform:translateX(-50%) translateY(4px);white-space:nowrap;padding:7px 9px;border-radius:7px;background:#08060a;border:1px solid #44304c;color:#f3eaf5;font-size:10px;font-weight:800;letter-spacing:.1px;box-shadow:0 10px 30px rgba(0,0,0,.35);opacity:0;pointer-events:none;transition:.12s;z-index:80}
+.overall-tier-icon::before{content:'';position:absolute;left:50%;bottom:calc(100% + 4px);width:8px;height:8px;transform:translateX(-50%) rotate(45deg);background:#08060a;border-right:1px solid #44304c;border-bottom:1px solid #44304c;opacity:0;pointer-events:none;transition:.12s;z-index:79}
+.overall-tier-icon:hover::after{opacity:1;transform:translateX(-50%) translateY(0)}
+.overall-tier-icon:hover::before{opacity:1}
+.profile-mode-top{gap:10px}.mode-points{font-size:9px;color:#c8afd0;font-weight:800;white-space:nowrap}.profile-tier-points{display:grid;gap:6px}.profile-tier-line{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:10px;color:#948499}.profile-tier-line>span{display:flex;align-items:center;gap:6px}.profile-tier-line>b{color:#e9ddeC;font-size:10px;white-space:nowrap}

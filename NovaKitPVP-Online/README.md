@@ -49,3 +49,10 @@ Notes:
 - Keep icon files under roughly 600 KB each.
 - Recommended sizes: 64x64 or 128x128 for kit/rank icons, 128x128 or 256x256 for the main brand logo.
 - After selecting a file, click **Save Icons** to publish it site-wide.
+
+
+## V5 leaderboard/profile update
+- Overall tier column now shows each gamemode's uploaded kit icon instead of a text-only tier badge.
+- Hovering a kit icon shows the gamemode, tier/rank and its point value.
+- Player profiles now show the point value of Active, Peak and Retired tiers per gamemode, plus the points currently counted toward Overall.
+- Retired-only tier entries are hidden from individual gamemode pages and remain visible through Overall/player profile history.
