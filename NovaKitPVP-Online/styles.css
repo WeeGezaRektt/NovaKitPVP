@@ -132,3 +132,88 @@
 .discord-btn:hover{border-color:#a9afff;color:white!important;filter:brightness(1.06)}
 .link-field{margin-top:18px;padding-top:16px;border-top:1px solid #251c29}.link-field .asset-input{height:44px}
 .asset-file:disabled{opacity:.55;cursor:wait}
+
+
+/* V9 — larger uploaded brand logo + more reliable player skin presentation */
+.brand{
+  gap:14px;
+}
+.brand-mark{
+  width:62px!important;
+  height:62px!important;
+  min-width:62px;
+  padding:0!important;
+  border-radius:13px!important;
+  overflow:hidden;
+}
+.brand-mark:has(img){
+  background:#0b0810!important;
+  box-shadow:0 0 0 1px #33233a,0 10px 28px rgba(0,0,0,.28)!important;
+}
+.brand-mark:has(img) .brand-icon,
+.brand-mark:has(img) img{
+  width:58px!important;
+  height:58px!important;
+  max-width:58px!important;
+  max-height:58px!important;
+  object-fit:cover!important;
+  object-position:center!important;
+  margin:auto!important;
+  border-radius:10px!important;
+  display:block!important;
+}
+.brand>span:last-child{
+  line-height:1.05;
+}
+.brand>span:last-child>small{
+  margin-top:5px;
+}
+.topbar{
+  min-height:82px;
+  height:82px;
+}
+
+/* Keep real rendered skins sharp and centered inside the leaderboard cutout. */
+.body-render{
+  right:12px!important;
+  bottom:-12px!important;
+  width:78px!important;
+  height:104px!important;
+}
+.body-render img{
+  width:auto!important;
+  height:100px!important;
+  max-width:88px!important;
+  max-height:100px!important;
+  object-fit:contain!important;
+  object-position:center bottom!important;
+  image-rendering:auto!important;
+}
+
+/* Player heads should use the live render without inherited block styling. */
+.ident img,
+.kit-tier-player img,
+.profile-avatar-ring img,
+.admin-player img{
+  object-fit:cover;
+  object-position:center;
+}
+
+@media(max-width:720px){
+  .brand-mark{
+    width:52px!important;
+    height:52px!important;
+    min-width:52px;
+  }
+  .brand-mark:has(img) .brand-icon,
+  .brand-mark:has(img) img{
+    width:48px!important;
+    height:48px!important;
+    max-width:48px!important;
+    max-height:48px!important;
+  }
+  .topbar{
+    min-height:72px;
+    height:72px;
+  }
+}

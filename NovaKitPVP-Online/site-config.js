@@ -55,11 +55,22 @@ export function iconMarkup(value,className='asset-icon'){
 export function headUrls(player,size=64){
   const urls=[];
   if(player?.avatar_url) urls.push(player.avatar_url);
+
   const uuid=String(player?.minecraft_uuid||'').replace(/-/g,'');
-  if(/^[0-9a-f]{32}$/i.test(uuid)) urls.push(`https://crafatar.com/avatars/${uuid}?size=${size}&overlay`);
-  if(player?.name){
-    urls.push(`https://mc-heads.net/avatar/${encodeURIComponent(player.name)}/${size}`);
-    urls.push(`https://minotar.net/avatar/${encodeURIComponent(player.name)}/${size}.png`);
+  const name=String(player?.name||'').trim();
+  const id=/^[0-9a-f]{32}$/i.test(uuid)?uuid:name;
+
+  // Prefer renderers that resolve the player's current Java skin live.
+  if(id){
+    urls.push(`https://skinrender.dev/render/${encodeURIComponent(id)}/face?size=${size}`);
+    urls.push(`https://api.mcheads.org/head/${encodeURIComponent(id)}/${size}`);
+    urls.push(`https://mc-heads.net/avatar/${encodeURIComponent(id)}/${size}`);
+  }
+  if(/^[0-9a-f]{32}$/i.test(uuid)){
+    urls.push(`https://crafatar.com/avatars/${uuid}?size=${size}&overlay`);
+  }
+  if(name){
+    urls.push(`https://minotar.net/avatar/${encodeURIComponent(name)}/${size}.png`);
   }
   return [...new Set(urls.filter(Boolean))];
 }
@@ -74,13 +85,20 @@ export function headImg(player,size=64,alt=''){
 export function bodyUrls(player,size=96){
   const urls=[];
   if(player?.avatar_url) urls.push(player.avatar_url);
+
   const uuid=String(player?.minecraft_uuid||'').replace(/-/g,'');
-  if(/^[0-9a-f]{32}$/i.test(uuid)){
-    urls.push(`https://crafatar.com/renders/body/${uuid}?overlay&scale=4`);
+  const name=String(player?.name||'').trim();
+  const id=/^[0-9a-f]{32}$/i.test(uuid)?uuid:name;
+
+  // These endpoints use the real Java skin and give us several fallbacks.
+  if(id){
+    urls.push(`https://skinrender.dev/render/${encodeURIComponent(id)}/body?size=${Math.max(128,size*2)}`);
+    urls.push(`https://api.mcheads.org/player/${encodeURIComponent(id)}/${Math.max(128,size*2)}`);
+    urls.push(`https://mc-heads.net/player/${encodeURIComponent(id)}/${Math.max(128,size*2)}`);
+    urls.push(`https://mc-heads.net/body/${encodeURIComponent(id)}/right`);
   }
-  if(player?.name){
-    urls.push(`https://mc-heads.net/body/${encodeURIComponent(player.name)}/${size}`);
-    urls.push(`https://mc-heads.net/player/${encodeURIComponent(player.name)}/${size}`);
+  if(/^[0-9a-f]{32}$/i.test(uuid)){
+    urls.push(`https://crafatar.com/renders/body/${uuid}?overlay&scale=8`);
   }
   return [...new Set(urls.filter(Boolean))];
 }

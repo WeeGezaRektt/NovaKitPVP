@@ -72,3 +72,10 @@ Notes:
 - HT1-HT5 rows show two up arrows.
 - Owner Appearance now has a Discord invite URL field; a Join Discord button appears beside search when set.
 - Brand/kit/rank images now upload to a public Supabase Storage bucket (up to 10 MB) instead of being embedded as large data URLs.
+
+
+## V9 logo and skin-render fix
+
+- Uploaded top-left logos now render much larger and centered.
+- Java player heads and body renders now try SkinRender first, then MCheads.org, MC-Heads.net, Crafatar/Minotar fallbacks.
+- This is intended to avoid the Steve/Alex fallback showing when a real Java skin exists.
