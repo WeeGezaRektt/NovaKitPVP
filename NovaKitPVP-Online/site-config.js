@@ -12,12 +12,12 @@ export const GAMEMODES = [
 ].map(([id,name,assetKey])=>({id,name,assetKey}));
 
 export const RANKS = [
-  {min:400,name:'Grandmaster',assetKey:'rank_grandmaster'},
-  {min:250,name:'Master',assetKey:'rank_master'},
-  {min:100,name:'Ace',assetKey:'rank_ace'},
-  {min:50,name:'Specialist',assetKey:'rank_specialist'},
-  {min:20,name:'Cadet',assetKey:'rank_cadet'},
-  {min:10,name:'Novice',assetKey:'rank_novice'},
+  {min:400,name:'Combat GrandMaster',assetKey:'rank_grandmaster'},
+  {min:250,name:'Combat Master',assetKey:'rank_master'},
+  {min:100,name:'Combat Ace',assetKey:'rank_ace'},
+  {min:50,name:'Combat Specialist',assetKey:'rank_specialist'},
+  {min:20,name:'Combat Cadet',assetKey:'rank_cadet'},
+  {min:10,name:'Combat Novice',assetKey:'rank_novice'},
   {min:0,name:'Rookie',assetKey:'rank_rookie'}
 ];
 
@@ -30,10 +30,12 @@ export const OWNER_EMAILS = ['geraldmcbride60@gmail.com','poppymacedu@gmail.com'
 
 export function scoreTier(row){
   if(!row) return 0;
-  if(row.active_tier && row.active_tier !== 'Unranked') return POINTS[row.active_tier] || 0;
-  if(row.retired_tier) return POINTS[row.retired_tier] || 0;
-  if(row.peak_tier) return POINTS[row.peak_tier] || 0;
-  return 0;
+  const active=row.active_tier && row.active_tier!=='Unranked' ? (POINTS[row.active_tier]||0) : 0;
+  const peak=row.peak_tier ? (POINTS[row.peak_tier]||0) : 0;
+  const retired=row.retired_tier ? (POINTS[row.retired_tier]||0) : 0;
+  // Overall points use the strongest tier the player has achieved in that kit.
+  // Example: current HT2 + peak HT1 = 60 points from the HT1 peak.
+  return Math.max(active,peak,retired);
 }
 export function totalPoints(player){ return (player.player_tiers||[]).reduce((s,t)=>s+scoreTier(t),0); }
 export function rankFor(points,assets={}){
@@ -67,6 +69,27 @@ export function headImg(player,size=64,alt=''){
   const fallbacks=JSON.stringify(urls.slice(1));
   return `<img src="${esc(src)}" data-head-fallbacks="${esc(fallbacks)}" alt="${esc(alt)}">`;
 }
+
+export function bodyUrls(player,size=96){
+  const urls=[];
+  if(player?.avatar_url) urls.push(player.avatar_url);
+  const uuid=String(player?.minecraft_uuid||'').replace(/-/g,'');
+  if(/^[0-9a-f]{32}$/i.test(uuid)){
+    urls.push(`https://crafatar.com/renders/body/${uuid}?overlay&scale=4`);
+  }
+  if(player?.name){
+    urls.push(`https://mc-heads.net/body/${encodeURIComponent(player.name)}/${size}`);
+    urls.push(`https://mc-heads.net/player/${encodeURIComponent(player.name)}/${size}`);
+  }
+  return [...new Set(urls.filter(Boolean))];
+}
+export function bodyImg(player,size=96,alt=''){
+  const urls=bodyUrls(player,size);
+  const src=urls[0]||'';
+  const fallbacks=JSON.stringify(urls.slice(1));
+  return `<img src="${esc(src)}" data-head-fallbacks="${esc(fallbacks)}" alt="${esc(alt)}">`;
+}
+
 export function bindHeadFallbacks(root=document){
   root.querySelectorAll?.('img[data-head-fallbacks]').forEach(img=>{
     if(img.dataset.headBound==='1')return;

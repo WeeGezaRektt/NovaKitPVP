@@ -51,8 +51,10 @@ Notes:
 - After selecting a file, click **Save Icons** to publish it site-wide.
 
 
-## V5 leaderboard/profile update
-- Overall tier column now shows each gamemode's uploaded kit icon instead of a text-only tier badge.
-- Hovering a kit icon shows the gamemode, tier/rank and its point value.
-- Player profiles now show the point value of Active, Peak and Retired tiers per gamemode, plus the points currently counted toward Overall.
-- Retired-only tier entries are hidden from individual gamemode pages and remain visible through Overall/player profile history.
+## V6 visual + scoring update
+- Overall leaderboard redesigned toward the supplied dark MCTiers-style reference.
+- Player rows now use rendered Minecraft bodies, tier icon circles, rank labels and compact region blocks.
+- Profile modal redesigned with circular player head, combat-rank pill, overall position and tier tokens.
+- Combat rank names are now Combat GrandMaster, Combat Master, Combat Ace, Combat Specialist, Combat Cadet, Combat Novice, and Rookie.
+- Overall scoring now counts the strongest achieved tier per kit. A current HT2 with peak HT1 contributes 60 points.
+- Individual kit pages show active tiers only; retired tiers remain available on Overall/profile context.
