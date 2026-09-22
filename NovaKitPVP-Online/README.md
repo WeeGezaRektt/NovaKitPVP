@@ -32,3 +32,20 @@ Production requires:
 ## Supabase
 
 Run `supabase/schema.sql` on a fresh project. The live project has already had the email-role and icon migrations applied.
+
+
+## V4 uploadable icon update
+
+Owners can now upload real icon files directly from the Appearance tab.
+
+Supported formats:
+- PNG
+- SVG
+- WEBP
+- JPG / JPEG
+
+Notes:
+- Uploaded icons are stored directly as image data in the `site_assets` table, so no separate image host is required.
+- Keep icon files under roughly 600 KB each.
+- Recommended sizes: 64x64 or 128x128 for kit/rank icons, 128x128 or 256x256 for the main brand logo.
+- After selecting a file, click **Save Icons** to publish it site-wide.

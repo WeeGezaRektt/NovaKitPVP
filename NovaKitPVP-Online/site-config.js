@@ -42,7 +42,7 @@ export function rankFor(points,assets={}){
 }
 export function tierSortValue(tier){ const i=ACTIVE_TIERS.indexOf(tier); return i<0?999:i; }
 export function assetValue(assets,key){return assets?.[key] || DEFAULT_ASSETS[key] || '';}
-export function isImageIcon(value){return /^https?:\/\//i.test(String(value||'').trim());}
+export function isImageIcon(value){return /^(https?:\/\/|data:image\/)/i.test(String(value||'').trim());}
 export function iconMarkup(value,className='asset-icon'){
   value=String(value||'').trim();
   if(!value) return '';
