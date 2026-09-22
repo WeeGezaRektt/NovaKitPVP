@@ -79,3 +79,11 @@ Notes:
 - Uploaded top-left logos now render much larger and centered.
 - Java player heads and body renders now try SkinRender first, then MCheads.org, MC-Heads.net, Crafatar/Minotar fallbacks.
 - This is intended to avoid the Steve/Alex fallback showing when a real Java skin exists.
+
+
+## V10 readability + Discord
+
+- Join Discord now always occupies the slot beside Search; before a link is configured it is visibly disabled.
+- Owners set the invite at Staff Login → Appearance & Links → Discord invite link.
+- Desktop leaderboard rows, names, ranks, rank icons, point totals, regions, kit icons and tier labels are enlarged.
+- Kit pages and the player profile dialog are enlarged for better readability.

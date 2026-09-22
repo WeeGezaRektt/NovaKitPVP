@@ -41,7 +41,23 @@ function overallBadges(p){return GAMEMODES.map(g=>overallTierToken(g,rowForMode(
 function sortedOverall(list=players){return [...list].sort((a,b)=>totalPoints(b)-totalPoints(a)||a.name.localeCompare(b.name))}
 function modeIcon(g){return iconMarkup(assetValue(assets,g.assetKey),'asset-icon')}
 function applyBrand(){const el=$('#brandMark');if(el)el.innerHTML=iconMarkup(assetValue(assets,'brand_logo'),'brand-icon')}
-function applyDiscord(){const btn=$('#discordBtn');if(!btn)return;const url=String(assetValue(assets,'discord_url')||'').trim();if(/^https?:\/\//i.test(url)){btn.href=url;btn.classList.remove('hidden')}else{btn.classList.add('hidden');btn.removeAttribute('href')}}
+function applyDiscord(){
+  const btn=$('#discordBtn');
+  if(!btn)return;
+  const url=String(assetValue(assets,'discord_url')||'').trim();
+  btn.classList.remove('hidden');
+  if(/^https?:\/\//i.test(url)){
+    btn.href=url;
+    btn.classList.remove('disabled');
+    btn.removeAttribute('aria-disabled');
+    btn.title='Join the NovaKitPVP Discord';
+  }else{
+    btn.removeAttribute('href');
+    btn.classList.add('disabled');
+    btn.setAttribute('aria-disabled','true');
+    btn.title='Owner: add the Discord invite in Staff Login → Appearance & Links';
+  }
+}
 function rowsToAssets(rows){return {...DEFAULT_ASSETS,...Object.fromEntries((rows||[]).map(r=>[r.asset_key,r.asset_value]))}}
 
 async function load(){
