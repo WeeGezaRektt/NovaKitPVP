@@ -291,3 +291,120 @@ begin
   begin alter publication supabase_realtime add table public.players; exception when duplicate_object then null; end;
   begin alter publication supabase_realtime add table public.player_tiers; exception when duplicate_object then null; end;
 end $$;
+
+-- ===== Email-based staff roles + customizable icons =====
+create table if not exists public.owner_emails (email text primary key);
+alter table public.owner_emails enable row level security;
+insert into public.owner_emails(email) values
+('geraldmcbride60@gmail.com'),('poppymacedu@gmail.com')
+on conflict (email) do nothing;
+revoke all on public.owner_emails from anon, authenticated;
+
+create table if not exists public.admin_emails (
+  email text primary key,
+  created_at timestamptz not null default now()
+);
+alter table public.admin_emails enable row level security;
+revoke all on public.admin_emails from anon, authenticated;
+
+create or replace function public.is_owner()
+returns boolean language sql stable security definer set search_path = '' as $$
+  select exists (
+    select 1 from public.owner_emails oe
+    where lower(oe.email)=lower(coalesce(auth.jwt() ->> 'email',''))
+  );
+$$;
+
+create or replace function public.is_admin()
+returns boolean language sql stable security definer set search_path = '' as $$
+  select public.is_owner() or exists (
+    select 1 from public.admin_emails ae
+    where lower(ae.email)=lower(coalesce(auth.jwt() ->> 'email',''))
+  );
+$$;
+
+create or replace function public.is_verified_staff()
+returns boolean language sql stable security definer set search_path = '' as $$
+  select public.is_admin();
+$$;
+
+create or replace function public.current_staff_name()
+returns text language sql stable security definer set search_path = '' as $$
+  select lower(coalesce(auth.jwt() ->> 'email',''));
+$$;
+
+create or replace function public.get_my_access()
+returns table(email text, role text)
+language sql stable security definer set search_path = '' as $$
+  select lower(coalesce(auth.jwt() ->> 'email',''))::text,
+    case when public.is_owner() then 'owner'::text
+         when public.is_admin() then 'admin'::text
+         else 'none'::text end
+  where auth.uid() is not null;
+$$;
+
+revoke all on function public.is_admin() from public, anon;
+revoke all on function public.get_my_access() from public, anon;
+grant execute on function public.is_admin() to authenticated;
+grant execute on function public.get_my_access() to authenticated;
+
+-- Admins can update/delete individual players, but only Owners can create players.
+drop policy if exists "Owners can update players" on public.players;
+drop policy if exists "Admins can update players" on public.players;
+create policy "Admins can update players" on public.players for update to authenticated
+using (public.is_admin()) with check (public.is_admin());
+drop policy if exists "Owners can delete players" on public.players;
+drop policy if exists "Admins can delete players" on public.players;
+create policy "Admins can delete players" on public.players for delete to authenticated using (public.is_admin());
+
+drop policy if exists "Verified staff can insert tiers" on public.player_tiers;
+drop policy if exists "Admins can insert tiers" on public.player_tiers;
+create policy "Admins can insert tiers" on public.player_tiers for insert to authenticated with check (public.is_admin());
+drop policy if exists "Verified staff can update tiers" on public.player_tiers;
+drop policy if exists "Admins can update tiers" on public.player_tiers;
+create policy "Admins can update tiers" on public.player_tiers for update to authenticated using (public.is_admin()) with check (public.is_admin());
+drop policy if exists "Owners can delete tiers" on public.player_tiers;
+drop policy if exists "Admins can delete tiers" on public.player_tiers;
+create policy "Admins can delete tiers" on public.player_tiers for delete to authenticated using (public.is_admin());
+
+-- Owner-only log clear.
+drop policy if exists "Owners can clear audit logs" on public.audit_logs;
+create policy "Owners can clear audit logs" on public.audit_logs for delete to authenticated using (public.is_owner());
+create or replace function public.clear_audit_logs()
+returns void language plpgsql security definer set search_path = '' as $$
+declare actor_id uuid; declare actor_name text;
+begin
+  if not public.is_owner() then raise exception 'Owner access required'; end if;
+  actor_id:=auth.uid(); actor_name:=public.current_staff_name();
+  delete from public.audit_logs;
+  insert into public.audit_logs(actor_auth_user_id,actor_minecraft_username,action,change)
+  values(actor_id,actor_name,'AUDIT_LOG_CLEARED',jsonb_build_object('scope','all previous audit entries'));
+end; $$;
+revoke all on function public.clear_audit_logs() from public, anon;
+grant execute on function public.clear_audit_logs() to authenticated;
+
+-- Owner-editable site/kit/rank icons. Values may be emoji/symbols or https image URLs.
+create table if not exists public.site_assets (
+  asset_key text primary key,
+  asset_value text not null default '',
+  updated_at timestamptz not null default now()
+);
+alter table public.site_assets enable row level security;
+drop policy if exists "Public can read site assets" on public.site_assets;
+create policy "Public can read site assets" on public.site_assets for select using (true);
+drop policy if exists "Owners can manage site assets" on public.site_assets;
+create policy "Owners can manage site assets" on public.site_assets for all to authenticated using (public.is_owner()) with check (public.is_owner());
+grant select on public.site_assets to anon, authenticated;
+grant insert, update, delete on public.site_assets to authenticated;
+insert into public.site_assets(asset_key,asset_value) values
+('brand_logo','N'),('kit_sword','⚔'),('kit_mace','◆'),('kit_vanilla','✦'),('kit_spearmace','➹'),('kit_diasmp','◇'),
+('kit_nethpot','◈'),('kit_diapot','◉'),('kit_cart','▣'),('kit_uhc','❤'),('kit_nethsmp','⬢'),
+('rank_grandmaster','✹'),('rank_master','◆'),('rank_ace','✦'),('rank_specialist','✧'),('rank_cadet','◇'),('rank_novice','◈'),('rank_rookie','·')
+on conflict (asset_key) do nothing;
+
+do $$ begin
+  begin alter publication supabase_realtime add table public.site_assets; exception when duplicate_object then null; end;
+end $$;
+
+-- Minecraft link codes are no longer used.
+revoke execute on function public.create_link_request() from authenticated;

@@ -1,76 +1,34 @@
 # NovaKitPVP Online
 
-A Vercel + Supabase version of the NovaKitPVP Minecraft tierlist.
+Public Minecraft PvP rankings + email-based staff administration, deployed with Vercel and Supabase.
 
-## Included
+## Staff roles
 
-- Public Overall leaderboard plus Sword, Mace, Vanilla, SpearMace, DiaSMP, NethPot, DiaPot, Cart, UHC and NethSMP pages.
-- HT1 -> LT5 point system.
-- Active, peak and retired tier history.
-- Public Minecraft-head player profiles.
-- Real online Supabase database with Row Level Security.
-- Staff website login.
-- Minecraft account verification using one-time `/tierlink` codes.
-- `WeeGezaRektt` and `PoppyMacedU` automatically become Owners only after the Minecraft server verifies the account.
-- All other Minecraft-verified staff become Tier Staff and can change tiers only.
-- Owner-only player/profile editing, staff password reset, audit logs, Reset All Tiers and Factory Reset.
-- Realtime public leaderboard refreshes.
+- **Owner** is granted only when the signed-in email is exactly one of the two Owner emails configured in `public.owner_emails`.
+- **Admin** accounts are created by an Owner from the Staff Accounts tab and stored in `public.admin_emails`.
+- Admins can edit player details/tiers and delete an individual player.
+- Admins cannot access audit logs, clear logs, change passwords, manage staff, change site icons, reset every tier, or factory-reset the tierlist.
+- Owners can access all of those controls.
+- Minecraft `/tierlink` linking is retired.
 
-## Supabase setup
+## Custom icons
 
-1. Create a Supabase project.
-2. Run `supabase/schema.sql` once in the SQL editor.
-3. In Authentication settings, choose whether email confirmation is required. For easiest staff setup, email/password auth can be used normally.
-4. Copy the project URL, anon key and service-role key.
+Owners get an **Appearance** tab. Every kit icon, the top-left NovaKitPVP logo icon, and every combat-rank icon can be changed. Each value accepts either an emoji/symbol or an `https://` image URL.
+
+## Java player heads
+
+When a player is saved, the website tries to resolve the Java username through Mojang and stores the UUID. Java heads use Crafatar when a UUID exists, with `mc-heads.net` and Minotar fallbacks. A custom avatar URL can still override this for Bedrock/custom players.
 
 ## Vercel environment variables
 
-Set these for Production, Preview and Development:
+Production requires:
 
 - `SUPABASE_URL`
 - `SUPABASE_ANON_KEY`
-- `SUPABASE_SERVICE_ROLE_KEY`
-- `MINECRAFT_LINK_SECRET` (use a long random value and keep it private)
+- `SUPABASE_SERVICE_ROLE_KEY` — required for Owner staff-account creation/removal and password resets
 
-The service-role key and Minecraft link secret are used only inside `/api/*` serverless functions and are never sent to the browser.
+`MINECRAFT_LINK_SECRET` is no longer needed.
 
-## Minecraft linking
+## Supabase
 
-The website generates a code such as `NOVA-A1B2C3`. A Paper plugin on the NovaKitPVP server should expose `/tierlink <code>` only to real staff (for example permission `novakitpvp.staff`). The plugin sends this HTTPS request:
-
-`POST https://YOUR-SITE.vercel.app/api/verify-link`
-
-Headers:
-
-- `Content-Type: application/json`
-- `x-nova-link-secret: <same MINECRAFT_LINK_SECRET>`
-
-Body:
-
-```json
-{
-  "code": "NOVA-A1B2C3",
-  "uuid": "the players Java UUID without dashes",
-  "username": "WeeGezaRektt"
-}
-```
-
-The API verifies the one-time code, marks the web account as linked and assigns role `owner` only for `WeeGezaRektt` or `PoppyMacedU`; other verified staff receive `tier_staff`.
-
-## Point rules
-
-- HT1 60
-- LT1 45
-- HT2 30
-- LT2 20
-- HT3 10
-- LT3 6
-- HT4 4
-- LT4 3
-- HT5 2
-- LT5 1
-- Unranked 0
-
-Retired: RHT1 60, RLT1 45, RHT2 30, RLT2 20.
-
-Each gamemode contributes once to Overall: active tier first; if unranked, retired tier; if neither, peak tier.
+Run `supabase/schema.sql` on a fresh project. The live project has already had the email-role and icon migrations applied.
