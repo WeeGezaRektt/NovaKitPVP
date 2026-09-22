@@ -1,5 +1,6 @@
 export const DEFAULT_ASSETS = {
   brand_logo:'N',
+  discord_url:'',
   kit_sword:'⚔', kit_mace:'◆', kit_vanilla:'✦', kit_spearmace:'➹', kit_diasmp:'◇',
   kit_nethpot:'◈', kit_diapot:'◉', kit_cart:'▣', kit_uhc:'❤', kit_nethsmp:'⬢',
   rank_grandmaster:'✹', rank_master:'◆', rank_ace:'✦', rank_specialist:'✧',

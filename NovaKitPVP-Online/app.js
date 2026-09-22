@@ -41,6 +41,7 @@ function overallBadges(p){return GAMEMODES.map(g=>overallTierToken(g,rowForMode(
 function sortedOverall(list=players){return [...list].sort((a,b)=>totalPoints(b)-totalPoints(a)||a.name.localeCompare(b.name))}
 function modeIcon(g){return iconMarkup(assetValue(assets,g.assetKey),'asset-icon')}
 function applyBrand(){const el=$('#brandMark');if(el)el.innerHTML=iconMarkup(assetValue(assets,'brand_logo'),'brand-icon')}
+function applyDiscord(){const btn=$('#discordBtn');if(!btn)return;const url=String(assetValue(assets,'discord_url')||'').trim();if(/^https?:\/\//i.test(url)){btn.href=url;btn.classList.remove('hidden')}else{btn.classList.add('hidden');btn.removeAttribute('href')}}
 function rowsToAssets(rows){return {...DEFAULT_ASSETS,...Object.fromEntries((rows||[]).map(r=>[r.asset_key,r.asset_value]))}}
 
 async function load(){
@@ -54,7 +55,7 @@ async function load(){
     if(assetsRes.error)console.warn(assetsRes.error);
     players=playersRes.data||[];
     assets=rowsToAssets(assetsRes.data);
-    applyBrand();renderNav();render();subscribe();
+    applyBrand();applyDiscord();renderNav();render();subscribe();
   }catch(e){console.error(e);$('#content').innerHTML=`<div class="empty"><b>NovaKitPVP is being configured.</b><br><br>${esc(e.message||e)}</div>`}
 }
 function subscribe(){
@@ -71,7 +72,7 @@ function refreshPlayers(){clearTimeout(refreshTimer);refreshTimer=setTimeout(asy
   const {data}=await supabase.from('players').select('id,name,region,avatar_url,minecraft_uuid,created_at,updated_at,player_tiers(id,gamemode,active_tier,peak_tier,retired_tier,updated_at)');
   if(data){players=data;render()}
 },250)}
-async function refreshAssets(){const {data}=await supabase.from('site_assets').select('asset_key,asset_value');if(data){assets=rowsToAssets(data);applyBrand();renderNav();render()}}
+async function refreshAssets(){const {data}=await supabase.from('site_assets').select('asset_key,asset_value');if(data){assets=rowsToAssets(data);applyBrand();applyDiscord();renderNav();render()}}
 function renderNav(){
   $('#gameNav').innerHTML=`<button class="game-link ${currentMode==='overall'?'active':''}" data-mode="overall"><span class="game-icon">⌂</span>Overall</button>`+GAMEMODES.map(g=>`<button class="game-link ${currentMode===g.id?'active':''}" data-mode="${g.id}"><span class="game-icon">${modeIcon(g)}</span>${esc(g.name)}</button>`).join('');
   document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{currentMode=b.dataset.mode;renderNav();render()})
@@ -111,7 +112,7 @@ function renderMode(g){
 }
 function modeTierRow(p,g){
   const t=rowForMode(p,g),tier=t?.active_tier||'Unranked',side=tier.startsWith('HT')?'ht':'lt';
-  return `<button class="kit-tier-player ${side}" data-player="${p.id}">${headImg(p,42,p.name)}<span class="grow"><strong>${esc(p.name)}</strong></span><span class="kit-tier-code ${tier.toLowerCase()}">${esc(tier)}</span><span class="kit-tier-chevron">⌃</span></button>`;
+  return `<button class="kit-tier-player ${side}" data-player="${p.id}">${headImg(p,42,p.name)}<span class="grow"><strong>${esc(p.name)}</strong></span><span class="kit-tier-code ${tier.toLowerCase()}">${esc(tier)}</span><span class="kit-tier-chevron ${side==='ht'?'higher':''}">${side==='ht'?'↑↑':''}</span></button>`;
 }
 function bindProfiles(){document.querySelectorAll('[data-player]').forEach(b=>b.onclick=()=>openProfile(players.find(p=>p.id===b.dataset.player)))}
 function positionBadge(place){return `<span class="profile-position-badge ${place===1?'gold':place===2?'silver':place===3?'bronze':''}">${place||'—'}.</span>`}

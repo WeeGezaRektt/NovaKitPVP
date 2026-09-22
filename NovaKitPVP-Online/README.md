@@ -64,3 +64,11 @@ Notes:
 - Separate kit pages use five columns: Tier 1 through Tier 5.
 - Only active tiers appear on kit pages. HT players are listed before LT players within each tier.
 - Overall active tier icons now have tier-colored rings; retired tier icons use a neutral grey ring.
+
+
+## V8 readability / Discord / icon uploads
+- Larger overall leaderboard rows, rank text, points, rank icons and tier tokens.
+- Larger 5-column kit boards and player rows.
+- HT1-HT5 rows show two up arrows.
+- Owner Appearance now has a Discord invite URL field; a Join Discord button appears beside search when set.
+- Brand/kit/rank images now upload to a public Supabase Storage bucket (up to 10 MB) instead of being embedded as large data URLs.
