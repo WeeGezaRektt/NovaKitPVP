@@ -1,0 +1,7 @@
+/* V11: MCTiers-style empty "not tested" kit slots on Overall */
+.overall-tier-token.untested{opacity:.72;cursor:help}
+.overall-tier-token.untested .overall-kit-circle{background:#111a24!important;border:2px dashed #425166!important;box-shadow:none!important;filter:none!important}
+.overall-tier-token.untested>b{min-width:26px;color:#718196!important;background:#202a35!important;border:0!important;text-align:center}
+.overall-tier-token.untested:hover{opacity:1}
+.overall-tier-token.untested::after{content:attr(data-tier-tip);position:absolute;left:50%;bottom:calc(100% + 10px);transform:translateX(-50%);white-space:nowrap;background:#071019;color:#ecf3fa;border:1px solid #32465a;padding:7px 9px;border-radius:8px;font-size:10px;font-weight:700;opacity:0;pointer-events:none;z-index:100;transition:.12s}
+.overall-tier-token.untested:hover::after{opacity:1}
