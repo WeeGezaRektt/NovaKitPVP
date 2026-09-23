@@ -1,0 +1,543 @@
+
+/* V14 — proper phone layout + restore Bedrock skin patch compatibility */
+
+@media (max-width: 720px){
+  html,body{
+    width:100%;
+    max-width:100%;
+    overflow-x:hidden !important;
+  }
+
+  body{
+    font-size:16px;
+  }
+
+  .topbar{
+    position:sticky !important;
+    top:0 !important;
+    z-index:100 !important;
+    display:grid !important;
+    grid-template-columns:1fr !important;
+    gap:10px !important;
+    width:100% !important;
+    padding:10px 10px 12px !important;
+  }
+
+  .brand{
+    justify-self:start !important;
+    gap:10px !important;
+  }
+
+  .brand-mark{
+    width:46px !important;
+    height:46px !important;
+    min-width:46px !important;
+  }
+
+  .brand-mark img,
+  .brand-mark .brand-icon{
+    width:42px !important;
+    height:42px !important;
+    max-width:42px !important;
+    max-height:42px !important;
+  }
+
+  .brand > span:last-child{
+    font-size:18px !important;
+  }
+
+  .brand small{
+    font-size:9px !important;
+    letter-spacing:1.2px !important;
+  }
+
+  .nav-actions{
+    display:grid !important;
+    grid-template-columns:1fr 1fr !important;
+    width:100% !important;
+    gap:8px !important;
+  }
+
+  #search{
+    grid-column:1 / -1 !important;
+    display:block !important;
+    width:100% !important;
+    min-width:0 !important;
+    height:42px !important;
+    font-size:16px !important;
+  }
+
+  .nav-actions .btn{
+    width:100% !important;
+    min-width:0 !important;
+    height:42px !important;
+    padding:0 10px !important;
+    font-size:13px !important;
+  }
+
+  .shell{
+    display:block !important;
+    width:100% !important;
+    max-width:none !important;
+    padding:10px 8px 26px !important;
+  }
+
+  .sidebar{
+    position:static !important;
+    width:100% !important;
+    height:auto !important;
+    margin:0 0 10px !important;
+  }
+
+  .game-nav{
+    display:flex !important;
+    flex-direction:row !important;
+    flex-wrap:nowrap !important;
+    overflow-x:auto !important;
+    overflow-y:hidden !important;
+    width:100% !important;
+    gap:6px !important;
+    padding:0 0 6px !important;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+  }
+
+  .game-nav::-webkit-scrollbar{
+    display:none;
+  }
+
+  .game-link{
+    flex:0 0 auto !important;
+    width:auto !important;
+    min-width:92px !important;
+    height:40px !important;
+    padding:0 10px !important;
+    font-size:12px !important;
+    white-space:nowrap !important;
+  }
+
+  .game-icon{
+    width:18px !important;
+  }
+
+  .game-icon img{
+    width:18px !important;
+    height:18px !important;
+  }
+
+  .side-card{
+    display:none !important;
+  }
+
+  .hero{
+    display:block !important;
+    width:100% !important;
+    min-height:0 !important;
+    margin:10px 0 12px !important;
+  }
+
+  .eyebrow{
+    font-size:9px !important;
+    margin-bottom:5px !important;
+  }
+
+  .hero h1{
+    font-size:24px !important;
+    line-height:1.1 !important;
+  }
+
+  .hero p{
+    font-size:12px !important;
+    line-height:1.45 !important;
+  }
+
+  .stats{
+    display:grid !important;
+    grid-template-columns:1fr 1fr !important;
+    width:100% !important;
+    gap:7px !important;
+    margin-top:12px !important;
+  }
+
+  .stat{
+    min-width:0 !important;
+    padding:10px 8px !important;
+    text-align:center !important;
+  }
+
+  .stat strong{
+    font-size:21px !important;
+  }
+
+  .stat small{
+    font-size:8px !important;
+  }
+
+  /* Overall cards: top row for player, second full-width row for all 10 kits */
+  .ref-leaderboard{
+    gap:8px !important;
+  }
+
+  .ref-player-row{
+    display:grid !important;
+    grid-template-columns:72px minmax(0,1fr) 44px !important;
+    grid-template-areas:
+      "rank ident region"
+      "tiers tiers tiers" !important;
+    gap:0 !important;
+    width:100% !important;
+    min-height:0 !important;
+    padding:0 !important;
+    overflow:hidden !important;
+    border-radius:13px !important;
+  }
+
+  .rank-strip{
+    grid-area:rank !important;
+    min-height:78px !important;
+    height:78px !important;
+    border-radius:12px 0 0 0 !important;
+    clip-path:none !important;
+  }
+
+  .rank-strip .place{
+    font-size:25px !important;
+    padding-left:8px !important;
+  }
+
+  .body-render{
+    width:45px !important;
+    height:67px !important;
+    right:1px !important;
+    bottom:-4px !important;
+  }
+
+  .body-render img{
+    height:64px !important;
+    max-height:64px !important;
+    max-width:45px !important;
+    object-fit:contain !important;
+  }
+
+  .ref-player-row > .ident{
+    grid-area:ident !important;
+    padding:10px 8px !important;
+    min-width:0 !important;
+  }
+
+  .ref-player-row > .ident strong{
+    font-size:18px !important;
+    line-height:1.08 !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+    white-space:nowrap !important;
+  }
+
+  .subline{
+    margin-top:4px !important;
+  }
+
+  .ref-rank{
+    font-size:12px !important;
+    gap:5px !important;
+    min-width:0 !important;
+  }
+
+  .ref-rank i{
+    width:16px !important;
+    height:16px !important;
+  }
+
+  .ref-rank i img,
+  .ref-rank .rank-icon{
+    width:15px !important;
+    height:15px !important;
+    max-width:15px !important;
+    max-height:15px !important;
+  }
+
+  .ref-rank em{
+    font-size:11px !important;
+  }
+
+  .row-region{
+    grid-area:region !important;
+    min-height:78px !important;
+    border-left:1px solid #182330 !important;
+    border-right:0 !important;
+  }
+
+  .row-region .region{
+    min-width:32px !important;
+    height:31px !important;
+    padding:0 5px !important;
+    font-size:10px !important;
+  }
+
+  .ref-tiers{
+    grid-area:tiers !important;
+    display:grid !important;
+    grid-template-columns:repeat(5,1fr) !important;
+    width:100% !important;
+    padding:8px 8px 9px !important;
+    gap:6px 4px !important;
+    border-top:1px solid #182330 !important;
+  }
+
+  .overall-tier-token{
+    display:grid !important;
+    grid-template-rows:30px 13px !important;
+    min-width:0 !important;
+    width:100% !important;
+    height:45px !important;
+    justify-items:center !important;
+  }
+
+  .overall-kit-circle{
+    width:30px !important;
+    height:30px !important;
+    min-width:30px !important;
+  }
+
+  .overall-kit-circle .asset-icon,
+  .overall-kit-circle img{
+    width:18px !important;
+    height:18px !important;
+    max-width:18px !important;
+    max-height:18px !important;
+  }
+
+  .overall-tier-token > b{
+    font-size:9px !important;
+    line-height:12px !important;
+    padding:0 3px !important;
+    min-width:22px !important;
+  }
+
+  /* Kit pages become vertical cards instead of a squeezed 5-column board */
+  .kit-tier-board{
+    display:block !important;
+    width:100% !important;
+    min-height:0 !important;
+    padding:8px !important;
+    overflow:visible !important;
+  }
+
+  .kit-tier-column{
+    width:100% !important;
+    min-width:0 !important;
+    margin-bottom:10px !important;
+  }
+
+  .kit-tier-column > header{
+    height:50px !important;
+    font-size:18px !important;
+  }
+
+  .kit-tier-player{
+    height:50px !important;
+    grid-template-columns:36px minmax(0,1fr) auto 26px !important;
+    gap:7px !important;
+    padding:0 8px !important;
+  }
+
+  .kit-tier-player img{
+    width:32px !important;
+    height:32px !important;
+  }
+
+  .kit-tier-player strong{
+    font-size:14px !important;
+  }
+
+  .kit-tier-code{
+    font-size:10px !important;
+    padding:4px 6px !important;
+  }
+
+  /* Public profile */
+  .dialog{
+    width:calc(100vw - 12px) !important;
+    max-width:calc(100vw - 12px) !important;
+    max-height:calc(100dvh - 12px) !important;
+    margin:auto !important;
+  }
+
+  .dialog-body{
+    padding:6px 12px 18px !important;
+    max-height:calc(100dvh - 72px) !important;
+    overflow:auto !important;
+  }
+
+  .profile-avatar-ring{
+    width:92px !important;
+    height:92px !important;
+  }
+
+  .profile-avatar-ring img{
+    width:82px !important;
+    height:82px !important;
+  }
+
+  .ref-profile h2{
+    font-size:24px !important;
+  }
+
+  .profile-rank-pill{
+    font-size:14px !important;
+    padding:7px 10px !important;
+  }
+
+  .profile-tier-token-box{
+    display:grid !important;
+    grid-template-columns:repeat(5,1fr) !important;
+    gap:6px !important;
+    padding:9px !important;
+  }
+
+  .profile-breakdown-row{
+    padding:9px 10px !important;
+  }
+
+  /* Staff portal/admin */
+  .auth-wrap,
+  .admin-shell{
+    width:100% !important;
+    max-width:100% !important;
+    padding:12px 8px 24px !important;
+  }
+
+  .auth-grid{
+    display:block !important;
+  }
+
+  .marketing{
+    display:none !important;
+  }
+
+  .auth-card{
+    width:100% !important;
+    padding:16px !important;
+  }
+
+  .admin-head{
+    display:block !important;
+  }
+
+  .identity{
+    margin-top:10px !important;
+  }
+
+  .tabs{
+    display:flex !important;
+    flex-wrap:nowrap !important;
+    overflow-x:auto !important;
+    gap:6px !important;
+    padding-bottom:5px !important;
+    scrollbar-width:none;
+  }
+
+  .tabs::-webkit-scrollbar{
+    display:none;
+  }
+
+  .tab{
+    flex:0 0 auto !important;
+    white-space:nowrap !important;
+  }
+
+  .panel{
+    padding:12px !important;
+  }
+
+  .panel-row{
+    align-items:flex-start !important;
+    flex-direction:column !important;
+  }
+
+  .panel-row .split-actions{
+    width:100% !important;
+  }
+
+  .panel-row .search,
+  #adminSearch{
+    display:block !important;
+    width:100% !important;
+    min-width:0 !important;
+  }
+
+  .admin-player{
+    grid-template-columns:44px minmax(0,1fr) 48px !important;
+    gap:8px !important;
+  }
+
+  .admin-player img{
+    width:40px !important;
+    height:40px !important;
+  }
+
+  .admin-player .admin-score,
+  .admin-player .arrow{
+    display:none !important;
+  }
+
+  .editor-grid,
+  .form-row{
+    grid-template-columns:1fr !important;
+  }
+
+  .tier-edit{
+    display:grid !important;
+    grid-template-columns:1fr 1fr !important;
+    gap:7px !important;
+    padding:12px 0 !important;
+  }
+
+  .tier-edit strong{
+    grid-column:1 / -1 !important;
+    font-size:13px !important;
+  }
+
+  .tier-edit select{
+    width:100% !important;
+    min-width:0 !important;
+    height:42px !important;
+    font-size:14px !important;
+  }
+
+  .asset-row{
+    grid-template-columns:42px minmax(0,1fr) !important;
+    gap:9px !important;
+  }
+
+  .asset-preview{
+    width:40px !important;
+    height:40px !important;
+  }
+
+  .asset-upload-row{
+    align-items:stretch !important;
+  }
+
+  .asset-file{
+    width:100% !important;
+  }
+
+  .staff-card{
+    grid-template-columns:42px minmax(0,1fr) !important;
+  }
+
+  .staff-card .split-actions{
+    grid-column:1 / -1 !important;
+  }
+
+  .danger-zone .split-actions,
+  .split-actions{
+    width:100% !important;
+  }
+
+  .danger-zone .btn,
+  .split-actions .btn{
+    flex:1 1 140px !important;
+  }
+}
