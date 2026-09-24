@@ -1,0 +1,27 @@
+
+.staff-card .split-actions{
+  align-items:center;
+}
+.staff-username-edit{
+  border-color:#4b3954!important;
+}
+.staff-username-edit:hover{
+  border-color:#885ba0!important;
+}
+.staff-display-name{
+  font-size:16px!important;
+}
+@media(max-width:720px){
+  .staff-card{
+    grid-template-columns:42px minmax(0,1fr)!important;
+  }
+  .staff-card .split-actions{
+    grid-column:1/-1!important;
+    display:grid!important;
+    grid-template-columns:1fr 1fr!important;
+    width:100%!important;
+  }
+  .staff-card .split-actions .btn{
+    width:100%!important;
+  }
+}

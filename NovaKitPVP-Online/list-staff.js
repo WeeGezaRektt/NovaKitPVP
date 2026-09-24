@@ -48,11 +48,10 @@ module.exports = async function handler(req, res) {
       return OWNER_EMAILS.has(email) || approvedSet.has(email);
     }).map(u => {
       const email = String(u.email || '').toLowerCase();
-      const username = nameById.get(String(u.id)) || OWNER_NAMES[email] || email;
       return {
         id: u.id,
         email,
-        username,
+        username: nameById.get(String(u.id)) || OWNER_NAMES[email] || email,
         confirmed: Boolean(u.email_confirmed_at),
         created_at: u.created_at || null,
         role: OWNER_EMAILS.has(email) ? 'owner' : 'admin'
