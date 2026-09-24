@@ -31,19 +31,39 @@ async function apiFetch(path,options={}){
   return body;
 }
 
+async function staffProfiles(){
+  if(!supabase)supabase=await getSupabase();
+  const {data,error}=await supabase
+    .from('staff_profiles')
+    .select('auth_user_id,minecraft_username');
+  if(error)throw error;
+  return data||[];
+}
+
 async function refreshStaffCards(){
-  const heading=[...document.querySelectorAll('#panel h2')].find(h=>h.textContent.trim()==='Staff Accounts');
+  const heading=[...document.querySelectorAll('#panel h2')]
+    .find(h=>h.textContent.trim()==='Staff Accounts');
   if(!heading)return;
 
-  let body;
+  let staffBody;
   try{
-    body=await apiFetch('/api/list-staff');
+    staffBody=await apiFetch('/api/list-staff');
   }catch(e){
-    console.warn(e);
+    console.warn('list-staff failed',e);
     return;
   }
 
-  const users=body.users||[];
+  let profiles=[];
+  try{
+    profiles=await staffProfiles();
+  }catch(e){
+    console.warn('staff profile lookup failed',e);
+  }
+
+  const namesById=new Map(
+    profiles.map(p=>[String(p.auth_user_id),String(p.minecraft_username||'').trim()])
+  );
+  const users=staffBody.users||[];
   const byEmail=new Map(users.map(u=>[String(u.email||'').toLowerCase(),u]));
 
   document.querySelectorAll('.staff-card').forEach(card=>{
@@ -56,15 +76,17 @@ async function refreshStaffCards(){
     if(!textHolder||!currentStrong)return;
 
     let email='';
-    const emailLine=textHolder.querySelector('.staff-email-line');
-    if(emailLine) email=emailLine.textContent.trim().toLowerCase();
+    const existingEmailLine=textHolder.querySelector('.staff-email-line');
+    if(existingEmailLine) email=existingEmailLine.textContent.trim().toLowerCase();
     else email=currentStrong.textContent.trim().toLowerCase();
 
     const staff=byEmail.get(email) || users.find(u=>u.id===targetUserId);
     if(!staff)return;
 
+    const username=namesById.get(String(staff.id)) || staff.username || staff.email;
+
     currentStrong.classList.add('staff-display-name');
-    currentStrong.textContent=staff.username||staff.email;
+    currentStrong.textContent=username;
 
     let line=textHolder.querySelector('.staff-email-line');
     if(!line){
@@ -75,25 +97,24 @@ async function refreshStaffCards(){
     line.textContent=staff.email;
 
     const actions=card.querySelector('.split-actions');
-    if(actions&&!actions.querySelector('[data-edit-staff-username]')){
-      const btn=document.createElement('button');
+    if(!actions)return;
+
+    let btn=actions.querySelector('[data-edit-staff-username]');
+    if(!btn){
+      btn=document.createElement('button');
       btn.className='btn small staff-username-edit';
       btn.textContent='Edit Username';
       btn.dataset.editStaffUsername=staff.id;
-      btn.dataset.currentUsername=staff.username||'';
-      btn.dataset.email=staff.email||'';
       actions.prepend(btn);
-    }else{
-      const btn=actions?.querySelector('[data-edit-staff-username]');
-      if(btn){
-        btn.dataset.currentUsername=staff.username||'';
-        btn.dataset.email=staff.email||'';
-      }
     }
+    btn.dataset.currentUsername=username===staff.email?'':username;
+    btn.dataset.email=staff.email||'';
   });
 }
 
 async function editStaffUsername(btn){
+  if(!supabase)supabase=await getSupabase();
+
   const current=btn.dataset.currentUsername||'';
   const email=btn.dataset.email||'this staff member';
   const username=prompt(`Set the staff username for ${email}:`,current);
@@ -107,13 +128,12 @@ async function editStaffUsername(btn){
 
   btn.disabled=true;
   try{
-    await apiFetch('/api/update-staff-username',{
-      method:'POST',
-      body:JSON.stringify({
-        targetUserId:btn.dataset.editStaffUsername,
-        username:clean
-      })
+    const {error}=await supabase.rpc('owner_set_staff_username',{
+      target_user_id:btn.dataset.editStaffUsername,
+      new_username:clean
     });
+    if(error)throw error;
+
     btn.dataset.currentUsername=clean;
     toast(`Staff username changed to ${clean}`);
     await refreshStaffCards();
@@ -128,13 +148,18 @@ document.addEventListener('click',e=>{
   const btn=e.target.closest?.('[data-edit-staff-username]');
   if(!btn)return;
   e.preventDefault();
+  e.stopImmediatePropagation();
   editStaffUsername(btn);
-});
+},true);
 
 let timer;
 function schedule(){
   clearTimeout(timer);
   timer=setTimeout(refreshStaffCards,80);
 }
-new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true});
+
+new MutationObserver(schedule).observe(document.documentElement,{
+  childList:true,
+  subtree:true
+});
 schedule();
