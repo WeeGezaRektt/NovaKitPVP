@@ -1,0 +1,20 @@
+
+/* V18 — Java / Bedrock / Full tierlist filters */
+.topbar{gap:18px!important}
+.platform-filters{display:flex;align-items:center;justify-content:center;gap:7px;margin-left:auto;margin-right:4px;padding:5px;border:1px solid #2b2030;border-radius:12px;background:#0d0910;box-shadow:inset 0 1px rgba(255,255,255,.025)}
+.platform-filter{height:36px;padding:0 13px;border:1px solid transparent;border-radius:8px;background:transparent;color:#887b8c;font:inherit;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;transition:.15s ease}
+.platform-filter:hover{color:#e4d8e8;background:#17111b}
+.platform-filter.active{color:#fff;border-color:#704391;background:linear-gradient(135deg,#7438bc,#b52c61);box-shadow:0 6px 20px rgba(138,50,196,.18)}
+.v18-filter-hidden{display:none!important}
+.v18-filter-empty{padding:18px 10px;text-align:center;color:#617184;font-size:12px}
+@media(min-width:1051px){.brand{flex:0 0 auto!important}.platform-filters{flex:0 0 auto}.nav-actions{flex:0 0 auto;margin-left:0!important}}
+@media(max-width:1250px) and (min-width:721px){
+  .topbar{flex-wrap:wrap!important;height:auto!important;min-height:94px!important;padding-top:10px!important;padding-bottom:10px!important}
+  .platform-filters{order:3;width:100%;margin:0!important}
+}
+@media(max-width:720px){
+  .topbar{display:grid!important;grid-template-columns:1fr!important}
+  .platform-filters{order:2!important;display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;width:100%!important;margin:0!important;gap:5px!important;padding:4px!important}
+  .platform-filter{width:100%!important;min-width:0!important;height:40px!important;padding:0 5px!important;font-size:11px!important}
+  .nav-actions{order:3!important}
+}
