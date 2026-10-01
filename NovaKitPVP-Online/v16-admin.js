@@ -1,4 +1,3 @@
-
 import { getSupabase } from './supabase-loader.js';
 
 let supabase;
@@ -12,12 +11,13 @@ function toast(message){
   t.textContent=message;
   t.classList.remove('hidden');
   clearTimeout(toast.timer);
-  toast.timer=setTimeout(()=>t.classList.add('hidden'),3000);
+  toast.timer=setTimeout(()=>t.classList.add('hidden'),3200);
 }
 
 async function apiFetch(path,options={}){
   if(!supabase)supabase=await getSupabase();
   const {data:{session}}=await supabase.auth.getSession();
+
   const r=await fetch(path,{
     ...options,
     headers:{
@@ -26,140 +26,169 @@ async function apiFetch(path,options={}){
       ...(options.headers||{})
     }
   });
+
   const body=await r.json().catch(()=>({}));
   if(!r.ok)throw new Error(body.error||`Request failed (${r.status})`);
   return body;
 }
 
-async function staffProfiles(){
+function validUsername(name){
+  return /^[A-Za-z0-9_.-]{2,32}$/.test(name);
+}
+
+async function saveUsername(userId,input,button){
   if(!supabase)supabase=await getSupabase();
-  const {data,error}=await supabase
-    .from('staff_profiles')
-    .select('auth_user_id,minecraft_username');
-  if(error)throw error;
-  return data||[];
+
+  const username=String(input?.value||'').trim();
+
+  if(!validUsername(username)){
+    toast('Username must be 2-32 letters, numbers, dots, dashes or underscores.');
+    return;
+  }
+
+  button.disabled=true;
+  input.disabled=true;
+
+  try{
+    const {error}=await supabase.rpc('owner_set_staff_username',{
+      target_user_id:userId,
+      new_username:username
+    });
+
+    if(error)throw error;
+
+    toast(`Staff username set to ${username}`);
+
+    // Refresh the Staff tab so the linked player / role UI immediately updates.
+    setTimeout(()=>{
+      document.querySelector('[data-tab="staff"]')?.click();
+    },250);
+  }catch(e){
+    toast(e.message||String(e));
+    button.disabled=false;
+    input.disabled=false;
+  }
 }
 
 async function refreshStaffCards(){
   const heading=[...document.querySelectorAll('#panel h2')]
     .find(h=>h.textContent.trim()==='Staff Accounts');
+
   if(!heading)return;
 
-  let staffBody;
+  let body;
   try{
-    staffBody=await apiFetch('/api/list-staff');
+    body=await apiFetch('/api/list-staff');
   }catch(e){
-    console.warn('list-staff failed',e);
+    console.warn('Could not load staff accounts',e);
     return;
   }
 
-  let profiles=[];
-  try{
-    profiles=await staffProfiles();
-  }catch(e){
-    console.warn('staff profile lookup failed',e);
-  }
-
-  const namesById=new Map(
-    profiles.map(p=>[String(p.auth_user_id),String(p.minecraft_username||'').trim()])
-  );
-  const users=staffBody.users||[];
-  const byEmail=new Map(users.map(u=>[String(u.email||'').toLowerCase(),u]));
+  const users=body.users||[];
+  const byId=new Map(users.map(u=>[String(u.id),u]));
 
   document.querySelectorAll('.staff-card').forEach(card=>{
     const reset=card.querySelector('[data-reset-password]');
     if(!reset)return;
 
-    const targetUserId=reset.dataset.resetPassword;
-    const textHolder=card.querySelector('span:nth-child(2)');
-    const currentStrong=textHolder?.querySelector('strong');
-    if(!textHolder||!currentStrong)return;
-
-    let email='';
-    const existingEmailLine=textHolder.querySelector('.staff-email-line');
-    if(existingEmailLine) email=existingEmailLine.textContent.trim().toLowerCase();
-    else email=currentStrong.textContent.trim().toLowerCase();
-
-    const staff=byEmail.get(email) || users.find(u=>u.id===targetUserId);
+    const userId=String(reset.dataset.resetPassword||'');
+    const staff=byId.get(userId);
     if(!staff)return;
 
-    const username=namesById.get(String(staff.id)) || staff.username || staff.email;
+    const textHolder=card.querySelector('span:nth-child(2)');
+    const strong=textHolder?.querySelector('strong');
+    if(!textHolder||!strong)return;
 
-    currentStrong.classList.add('staff-display-name');
-    currentStrong.textContent=username;
+    const username=String(staff.username||'').trim();
+    const display=username && username.toLowerCase()!==String(staff.email||'').toLowerCase()
+      ? username
+      : 'No username set';
 
-    let line=textHolder.querySelector('.staff-email-line');
-    if(!line){
-      line=document.createElement('span');
-      line.className='staff-email-line';
-      currentStrong.insertAdjacentElement('afterend',line);
+    strong.classList.add('staff-display-name');
+    strong.textContent=display;
+
+    let emailLine=textHolder.querySelector('.staff-email-line');
+    if(!emailLine){
+      emailLine=document.createElement('span');
+      emailLine.className='staff-email-line';
+      strong.insertAdjacentElement('afterend',emailLine);
     }
-    line.textContent=staff.email;
+    emailLine.textContent=staff.email||'';
 
-    const actions=card.querySelector('.split-actions');
-    if(!actions)return;
+    let editor=card.querySelector('.staff-username-inline');
+    if(!editor){
+      editor=document.createElement('div');
+      editor.className='staff-username-inline';
 
-    let btn=actions.querySelector('[data-edit-staff-username]');
-    if(!btn){
-      btn=document.createElement('button');
-      btn.className='btn small staff-username-edit';
-      btn.textContent='Edit Username';
-      btn.dataset.editStaffUsername=staff.id;
-      actions.prepend(btn);
+      const input=document.createElement('input');
+      input.type='text';
+      input.maxLength=32;
+      input.placeholder='Set staff / Minecraft username';
+      input.className='staff-username-input';
+
+      const save=document.createElement('button');
+      save.type='button';
+      save.className='btn small';
+      save.textContent='Save Username';
+
+      editor.append(input,save);
+
+      // Put username editing beside the account details instead of relying
+      // on the old prompt-only "Edit Username" button.
+      textHolder.appendChild(editor);
+
+      save.addEventListener('click',e=>{
+        e.preventDefault();
+        e.stopPropagation();
+        saveUsername(userId,input,save);
+      });
+
+      input.addEventListener('keydown',e=>{
+        if(e.key==='Enter'){
+          e.preventDefault();
+          save.click();
+        }
+      });
     }
-    btn.dataset.currentUsername=username===staff.email?'':username;
-    btn.dataset.email=staff.email||'';
+
+    const input=editor.querySelector('.staff-username-input');
+    if(document.activeElement!==input){
+      input.value=(username && username.toLowerCase()!==String(staff.email||'').toLowerCase())
+        ? username
+        : '';
+    }
+
+    const oldButton=card.querySelector('[data-edit-staff-username]');
+    if(oldButton)oldButton.remove();
+
+    let linkLine=textHolder.querySelector('.linked-player-line.v203');
+    if(staff.role==='tester' && staff.linked_player_name){
+      if(!linkLine){
+        linkLine=document.createElement('span');
+        linkLine.className='linked-player-line v203';
+        textHolder.appendChild(linkLine);
+      }
+      linkLine.textContent=`Linked tierlist player: ${staff.linked_player_name}`;
+    }else if(linkLine){
+      linkLine.remove();
+    }
   });
 }
 
-async function editStaffUsername(btn){
-  if(!supabase)supabase=await getSupabase();
-
-  const current=btn.dataset.currentUsername||'';
-  const email=btn.dataset.email||'this staff member';
-  const username=prompt(`Set the staff username for ${email}:`,current);
-  if(username===null)return;
-
-  const clean=username.trim();
-  if(!/^[A-Za-z0-9_.-]{2,32}$/.test(clean)){
-    toast('Username must be 2-32 letters, numbers, dots, dashes or underscores.');
-    return;
-  }
-
-  btn.disabled=true;
-  try{
-    const {error}=await supabase.rpc('owner_set_staff_username',{
-      target_user_id:btn.dataset.editStaffUsername,
-      new_username:clean
-    });
-    if(error)throw error;
-
-    btn.dataset.currentUsername=clean;
-    toast(`Staff username changed to ${clean}`);
-    await refreshStaffCards();
-  }catch(e){
-    toast(e.message||String(e));
-  }finally{
-    btn.disabled=false;
-  }
-}
-
-document.addEventListener('click',e=>{
-  const btn=e.target.closest?.('[data-edit-staff-username]');
-  if(!btn)return;
-  e.preventDefault();
-  e.stopImmediatePropagation();
-  editStaffUsername(btn);
-},true);
-
-let timer;
+let scheduled=false;
 function schedule(){
-  clearTimeout(timer);
-  timer=setTimeout(refreshStaffCards,80);
+  if(scheduled)return;
+  scheduled=true;
+
+  requestAnimationFrame(async()=>{
+    scheduled=false;
+    await refreshStaffCards();
+  });
 }
 
 new MutationObserver(schedule).observe(document.documentElement,{
   childList:true,
   subtree:true
 });
+
 schedule();

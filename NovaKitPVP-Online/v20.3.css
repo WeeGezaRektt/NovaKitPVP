@@ -1,0 +1,35 @@
+/* V20.3 - existing staff username editor */
+.staff-username-inline{
+  display:flex;
+  gap:7px;
+  align-items:center;
+  margin-top:7px;
+  max-width:480px;
+}
+.staff-username-input{
+  min-width:220px;
+  height:34px;
+  padding:0 10px;
+  border:1px solid #38283f;
+  border-radius:8px;
+  background:#0c0910;
+  color:#f4eef6;
+  font:inherit;
+  font-size:11px;
+}
+.staff-username-input:focus{
+  outline:none;
+  border-color:#a94cf5;
+  box-shadow:0 0 0 2px rgba(169,76,245,.12);
+}
+@media(max-width:720px){
+  .staff-username-inline{
+    width:100%;
+    flex-direction:column;
+    align-items:stretch;
+  }
+  .staff-username-input{
+    min-width:0;
+    width:100%;
+  }
+}
