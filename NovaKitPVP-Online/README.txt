@@ -1,0 +1,29 @@
+NovaKitPVP Temporary Tournament Brackets
+
+Backend already created in Supabase:
+- tournament_brackets table
+- public read access
+- OWNER-ONLY write protection via RLS + set_tournament_bracket RPC
+- all 10 kit rows pre-created
+- tournament updates appear in the audit log
+
+Frontend files in this patch:
+- tournament.html (new)
+- tournament.css (new)
+- tournament.js (new)
+- index.html (adds Tournament button)
+- admin.html (adds Tournament button for staff/owners too)
+- vercel.json (adds /tournament route)
+
+Tournament features:
+- Separate bracket for all 10 kits
+- Owner can choose 4 / 8 / 16 / 32 player bracket size
+- Owner can add existing tierlist players
+- Owner can move seeds up/down and remove players
+- Owner can advance match winners through every round
+- Public users, Admins and Testers are read-only
+- Owner permission is enforced server-side, not only in the UI
+- Live updates via Supabase realtime
+- Mobile-friendly horizontal bracket scrolling
+
+Temporary removal later is simple: remove the Tournament links/page files and drop tournament_brackets + set_tournament_bracket.
