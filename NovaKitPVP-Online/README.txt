@@ -16,6 +16,10 @@ Frontend files in this patch:
 - vercel.json (adds /tournament route)
 
 Tournament features:
+- DOUBLE ELIMINATION for every kit
+- First loss automatically drops the player into the Losers Bracket
+- Second loss eliminates them
+- Grand Final + automatic Bracket Reset if the Losers Bracket champion wins the first Grand Final
 - Separate bracket for all 10 kits
 - Owner can choose 4 / 8 / 16 / 32 player bracket size
 - Owner can add existing tierlist players
@@ -27,3 +31,5 @@ Tournament features:
 - Mobile-friendly horizontal bracket scrolling
 
 Temporary removal later is simple: remove the Tournament links/page files and drop tournament_brackets + set_tournament_bracket.
+
+Update note: this version keeps using the existing `winners` JSON field, so no tournament database schema change is required. Old single-elimination winner keys are read as Winners Bracket results for compatibility.
