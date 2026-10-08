@@ -9,7 +9,7 @@ let brackets=new Map();
 let assets={...DEFAULT_ASSETS};
 let currentMode='sword';
 let accessRole='public';
-let activeView='winners';
+let activeSection='winners';
 let activeWinnerRound=1;
 let activeLoserRound=1;
 let selectedSetupSlot=null;
@@ -44,41 +44,32 @@ function normalizeResults(raw){
 }
 
 function blankBracket(gamemode,size=16){
-  return {
-    gamemode,
-    bracket_size:size,
-    seeds:Array(size).fill(null),
-    winners:{},
-    started:false,
-    revision:0,
-    updated_at:null
-  };
+  return {gamemode,bracket_size:size,seeds:Array(size).fill(null),winners:{},started:false,revision:0,updated_at:null};
 }
 
 function normalizeBracket(row){
   const size=[4,8,16,32].includes(Number(row?.bracket_size))?Number(row.bracket_size):16;
   const rawSeeds=Array.isArray(row?.seeds)?row.seeds:[];
-  const seeds=Array(size).fill(null).map((_,i)=>rawSeeds[i]||null);
+  const winners=normalizeResults(row?.winners);
   return {
     ...row,
     bracket_size:size,
-    seeds,
-    winners:normalizeResults(row?.winners),
-    started:Boolean(row?.started)||Object.keys(normalizeResults(row?.winners)).length>0,
+    seeds:Array(size).fill(null).map((_,i)=>rawSeeds[i]||null),
+    winners,
+    started:Boolean(row?.started)||Object.keys(winners).length>0,
     revision:Number(row?.revision||0)
   };
 }
 
 function setBracket(row){
-  if(!row?.gamemode)return;
-  brackets.set(row.gamemode,normalizeBracket(row));
+  if(row?.gamemode)brackets.set(row.gamemode,normalizeBracket(row));
 }
 
 function state(){return brackets.get(currentMode)||blankBracket(currentMode)}
 function roundCount(size){return Math.log2(size)}
 function matchCount(size,roundNo){return size/(2**roundNo)}
 function loserRoundCount(size){return Math.max(0,(roundCount(size)*2)-2)}
-function loserMatchCount(size,lbRound){return size/(2**(Math.ceil(lbRound/2)+1))}
+function loserMatchCount(size,roundNo){return size/(2**(Math.ceil(roundNo/2)+1))}
 function wbKey(r,m){return `W:${r}-${m}`}
 function lbKey(r,m){return `L:${r}-${m}`}
 function wbWinner(s,r,m){return s.winners[wbKey(r,m)]||null}
@@ -99,11 +90,11 @@ function wbLoser(roundNo,matchNo,s){
   return null;
 }
 
-function lbParticipant(lbRound,matchNo,side,s){
-  const stage=Math.ceil(lbRound/2);
-  if(lbRound===1)return wbLoser(1,(matchNo*2)+side,s);
-  if(lbRound%2===1)return lbWinner(s,lbRound-1,(matchNo*2)+side);
-  if(side===0)return lbWinner(s,lbRound-1,matchNo);
+function lbParticipant(roundNo,matchNo,side,s){
+  const stage=Math.ceil(roundNo/2);
+  if(roundNo===1)return wbLoser(1,(matchNo*2)+side,s);
+  if(roundNo%2===1)return lbWinner(s,roundNo-1,(matchNo*2)+side);
+  if(side===0)return lbWinner(s,roundNo-1,matchNo);
   return wbLoser(stage+1,matchNo,s);
 }
 
@@ -118,85 +109,72 @@ function lbLoser(roundNo,matchNo,s){
 }
 
 function seedIndex(s,playerId){
-  const idx=s.seeds.findIndex(x=>String(x||'')===String(playerId||''));
-  return idx<0?9999:idx;
+  const i=s.seeds.findIndex(x=>String(x||'')===String(playerId||''));
+  return i<0?9999:i;
 }
-
-function orderBySeed(s,ids){
-  return ids.filter(Boolean).sort((a,b)=>seedIndex(s,a)-seedIndex(s,b));
-}
+function orderBySeed(s,ids){return ids.filter(Boolean).sort((a,b)=>seedIndex(s,a)-seedIndex(s,b))}
 
 function topEightPlacements(s){
   const places=Array(8).fill(null);
-  const wbRounds=roundCount(s.bracket_size);
-  const lbRounds=loserRoundCount(s.bracket_size);
-  const wbChamp=wbWinner(s,wbRounds,0);
-  const lbChamp=lbWinner(s,lbRounds,0);
-  const gfWinner=s.winners.GF||null;
-  const resetNeeded=Boolean(gfWinner&&lbChamp&&String(gfWinner)===String(lbChamp));
-  const rfWinner=s.winners.RF||null;
+  const wr=roundCount(s.bracket_size);
+  const lr=loserRoundCount(s.bracket_size);
+  const wbChamp=wbWinner(s,wr,0);
+  const lbChamp=lbWinner(s,lr,0);
+  const gf=s.winners.GF||null;
+  const resetNeeded=Boolean(gf&&lbChamp&&String(gf)===String(lbChamp));
+  const rf=s.winners.RF||null;
 
-  if(gfWinner&&wbChamp&&String(gfWinner)===String(wbChamp)){
-    places[0]=gfWinner;
-    places[1]=lbChamp||null;
-  }else if(resetNeeded&&rfWinner){
-    places[0]=rfWinner;
-    places[1]=String(rfWinner)===String(wbChamp)?lbChamp:wbChamp;
+  if(gf&&wbChamp&&String(gf)===String(wbChamp)){
+    places[0]=gf; places[1]=lbChamp||null;
+  }else if(resetNeeded&&rf){
+    places[0]=rf;
+    places[1]=String(rf)===String(wbChamp)?lbChamp:wbChamp;
   }
 
-  if(lbRounds>=1)places[2]=lbLoser(lbRounds,0,s);
-  if(lbRounds>=2)places[3]=lbLoser(lbRounds-1,0,s);
+  if(lr>=1)places[2]=lbLoser(lr,0,s);
+  if(lr>=2)places[3]=lbLoser(lr-1,0,s);
 
-  if(lbRounds>=3){
-    const n=loserMatchCount(s.bracket_size,lbRounds-2);
-    const eliminated=orderBySeed(s,Array.from({length:n},(_,m)=>lbLoser(lbRounds-2,m,s)));
-    places[4]=eliminated[0]||null;
-    places[5]=eliminated[1]||null;
+  if(lr>=3){
+    const n=loserMatchCount(s.bracket_size,lr-2);
+    const list=orderBySeed(s,Array.from({length:n},(_,m)=>lbLoser(lr-2,m,s)));
+    places[4]=list[0]||null; places[5]=list[1]||null;
   }
-
-  if(lbRounds>=4){
-    const n=loserMatchCount(s.bracket_size,lbRounds-3);
-    const eliminated=orderBySeed(s,Array.from({length:n},(_,m)=>lbLoser(lbRounds-3,m,s)));
-    places[6]=eliminated[0]||null;
-    places[7]=eliminated[1]||null;
+  if(lr>=4){
+    const n=loserMatchCount(s.bracket_size,lr-3);
+    const list=orderBySeed(s,Array.from({length:n},(_,m)=>lbLoser(lr-3,m,s)));
+    places[6]=list[0]||null; places[7]=list[1]||null;
   }
-
   return places;
 }
 
-function roundLabel(size,roundNo){
-  const matches=matchCount(size,roundNo);
-  if(matches===1)return 'Winners Final';
-  if(matches===2)return 'Winners Semifinals';
-  if(matches===4)return 'Winners Quarterfinals';
-  if(matches===8)return 'Winners Round of 16';
-  if(matches===16)return 'Winners Round of 32';
-  return `Winners Round ${roundNo}`;
+function roundLabel(size,r){
+  const m=matchCount(size,r);
+  if(m===1)return 'Final';
+  if(m===2)return 'Semifinals';
+  if(m===4)return 'Quarterfinals';
+  if(m===8)return 'Round of 16';
+  if(m===16)return 'Round of 32';
+  return `Round ${r}`;
 }
 
-function loserRoundLabel(size,roundNo){
-  const total=loserRoundCount(size);
-  if(roundNo===total)return 'Losers Final';
-  return `Losers Round ${roundNo}`;
+function loserRoundLabel(size,r){
+  return r===loserRoundCount(size)?'Losers Final':`Losers Round ${r}`;
 }
 
 function renderNav(){
   $('#tournamentKitNav').innerHTML=GAMEMODES.map(g=>`
-    <button class="tournament-kit-btn ${g.id===currentMode?'active':''}" data-tournament-mode="${g.id}">
-      <span class="tournament-kit-icon">${kitIcon(g)}</span>
-      <span>${esc(g.name)}</span>
+    <button class="tournament-kit-btn ${g.id===currentMode?'active':''}" data-mode="${g.id}">
+      <span class="tournament-kit-icon">${kitIcon(g)}</span><span>${esc(g.name)}</span>
     </button>`).join('');
 
-  document.querySelectorAll('[data-tournament-mode]').forEach(btn=>{
-    btn.onclick=()=>{
-      currentMode=btn.dataset.tournamentMode;
-      activeView='winners';
-      activeWinnerRound=1;
-      activeLoserRound=1;
-      selectedSetupSlot=null;
-      renderNav();
-      renderAll();
-    };
+  document.querySelectorAll('[data-mode]').forEach(btn=>btn.onclick=()=>{
+    currentMode=btn.dataset.mode;
+    selectedSetupSlot=null;
+    activeSection='winners';
+    activeWinnerRound=1;
+    activeLoserRound=1;
+    renderNav();
+    renderAll();
   });
 }
 
@@ -204,40 +182,32 @@ function renderAccess(){
   const badge=$('#accessBadge');
   if(isOwner()){
     badge.className='tournament-access-badge owner';
-    badge.textContent='Owner edit mode';
+    badge.textContent='Owner controls';
   }else if(accessRole==='admin'){
     badge.className='tournament-access-badge staff';
-    badge.textContent='Staff view · read only';
+    badge.textContent='Read only';
   }else{
     badge.className='tournament-access-badge public';
-    badge.textContent='Public view · read only';
+    badge.textContent='Live bracket';
   }
 }
 
-function playerMarkup(playerId,size=32){
-  const p=playerById.get(String(playerId));
-  if(!p)return '<span class="tournament-seed-empty">Unknown player</span>';
+function playerMarkup(id,size=32){
+  const p=playerById.get(String(id));
+  if(!p)return '<span class="empty-player">Empty</span>';
   return `${headImg(p,size,p.name)}<strong>${esc(p.name)}</strong>`;
 }
 
-function statusText(s){
-  if(s.started)return 'Tournament live · matchups locked';
-  if(s.seeds.some(Boolean))return 'Setup mode · drag players into matchups';
-  return 'Setup mode · add players to begin';
-}
-
 async function refreshCurrentBracket(){
-  const {data,error}=await supabase
-    .from('tournament_brackets')
+  const {data,error}=await supabase.from('tournament_brackets')
     .select('gamemode,bracket_size,seeds,winners,started,revision,updated_at')
-    .eq('gamemode',currentMode)
-    .single();
+    .eq('gamemode',currentMode).single();
   if(error)throw error;
   setBracket(data);
   renderAll();
 }
 
-async function runOwnerRpc(name,args,successMessage){
+async function runOwnerRpc(name,args,message){
   if(!isOwner()||busy)return null;
   busy=true;
   document.body.classList.add('tournament-busy');
@@ -247,7 +217,7 @@ async function runOwnerRpc(name,args,successMessage){
     const row=rpcRow(data);
     if(row)setBracket(row);
     renderAll();
-    if(successMessage)toast(successMessage);
+    if(message)toast(message);
     return row;
   }catch(e){
     const message=e?.message||String(e);
@@ -274,10 +244,15 @@ async function saveSetup(nextSeeds,nextSize=state().bracket_size,message='Matchu
 
 async function startTournament(){
   const s=state();
-  return runOwnerRpc('start_tournament',{
+  const row=await runOwnerRpc('start_tournament',{
     target_gamemode:currentMode,
     target_expected_revision:s.revision
-  },'Tournament started · matchups are now locked');
+  },'Tournament started');
+  if(row){
+    activeSection='winners';
+    activeWinnerRound=1;
+    renderBracket();
+  }
 }
 
 async function resetTournament(){
@@ -288,94 +263,112 @@ async function resetTournament(){
   },'Results reset · matchup editing unlocked');
 }
 
-async function advanceMatch(matchKey,playerId){
+function roundIsComplete(kind,s,r){
+  const count=kind==='winners'?matchCount(s.bracket_size,r):loserMatchCount(s.bracket_size,r);
+  for(let m=0;m<count;m++){
+    const a=kind==='winners'?wbParticipant(r,m,0,s):lbParticipant(r,m,0,s);
+    const b=kind==='winners'?wbParticipant(r,m,1,s):lbParticipant(r,m,1,s);
+    if(!a||!b)return false;
+    const w=kind==='winners'?wbWinner(s,r,m):lbWinner(s,r,m);
+    if(!w)return false;
+  }
+  return count>0;
+}
+
+async function advanceMatch(key,playerId,kind,roundNo){
   const s=state();
   if(!s.started){toast('Start the tournament first.');return}
-  if(s.winners[matchKey]){toast('That match is already locked.');return}
-  await runOwnerRpc('advance_tournament_match',{
+  if(s.winners[key]){toast('That match is already complete.');return}
+  const row=await runOwnerRpc('advance_tournament_match',{
     target_gamemode:currentMode,
-    target_match_key:matchKey,
+    target_match_key:key,
     target_winner_id:playerId,
     target_expected_revision:s.revision
   },'Winner advanced');
+  if(row){
+    const next=normalizeBracket(row);
+    const max=kind==='winners'?roundCount(next.bracket_size):loserRoundCount(next.bracket_size);
+    if(roundNo<max && roundIsComplete(kind,next,roundNo)){
+      if(kind==='winners')activeWinnerRound=roundNo+1;
+      else activeLoserRound=roundNo+1;
+      renderBracket();
+    }
+  }
 }
 
-function swapSlots(from,to){
-  if(from===to){selectedSetupSlot=null;renderOwnerControls();return}
-  const s=state();
-  if(s.started)return;
-  const next=[...s.seeds];
-  [next[from],next[to]]=[next[to],next[from]];
-  selectedSetupSlot=null;
-  saveSetup(next,s.bracket_size,'Matchup moved');
-}
-
-function setupSlotMarkup(s,index){
+function setupSlot(s,index){
   const pid=s.seeds[index];
   const p=pid?playerById.get(String(pid)):null;
   const selected=selectedSetupSlot===index;
-  return `<div class="setup-drop-slot ${p?'filled':'empty'} ${selected?'selected':''}" data-setup-slot="${index}">
-    <span class="setup-slot-number">${index+1}</span>
+  const editable=isOwner()&&!s.started;
+
+  return `<div class="setup-player-slot ${p?'filled':'empty'} ${selected?'selected':''}" data-setup-slot="${index}">
     ${p?`
-      <div class="setup-player" draggable="true" data-drag-seed="${index}">
-        ${headImg(p,34,p.name)}
-        <span><strong>${esc(p.name)}</strong><small>Drag or tap to move</small></span>
+      <div class="setup-player-main" ${editable?'draggable="true"':''} data-drag-slot="${index}">
+        ${headImg(p,38,p.name)}
+        <span><strong>${esc(p.name)}</strong><small>${editable?'Drag or tap to swap':'Tournament player'}</small></span>
       </div>
-      <button class="setup-remove" data-remove-setup="${index}" title="Remove ${esc(p.name)}">×</button>`:
-      `<span class="setup-empty-text">Drop player here</span>`}
+      ${editable?`<button class="setup-remove" data-remove="${index}" title="Remove">×</button>`:''}`:
+      `<span class="setup-empty">Empty slot</span>`}
   </div>`;
 }
 
-function wireSetupDrag(){
-  document.querySelectorAll('[data-drag-seed]').forEach(card=>{
-    card.addEventListener('dragstart',e=>{
+function swapSetupSlots(from,to){
+  if(from===to){selectedSetupSlot=null;renderBracket();return}
+  const s=state();
+  if(s.started||!isOwner())return;
+  const next=[...s.seeds];
+  [next[from],next[to]]=[next[to],next[from]];
+  selectedSetupSlot=null;
+  saveSetup(next,s.bracket_size,'Matchup updated');
+}
+
+function wireSetup(){
+  if(!isOwner()||state().started)return;
+
+  document.querySelectorAll('[data-drag-slot]').forEach(el=>{
+    el.addEventListener('dragstart',e=>{
       e.dataTransfer.effectAllowed='move';
-      e.dataTransfer.setData('text/plain',card.dataset.dragSeed);
-      card.classList.add('dragging');
+      e.dataTransfer.setData('text/plain',el.dataset.dragSlot);
+      el.closest('.setup-player-slot')?.classList.add('dragging');
     });
-    card.addEventListener('dragend',()=>card.classList.remove('dragging'));
+    el.addEventListener('dragend',()=>el.closest('.setup-player-slot')?.classList.remove('dragging'));
   });
 
   document.querySelectorAll('[data-setup-slot]').forEach(slot=>{
-    slot.addEventListener('dragover',e=>{
-      e.preventDefault();
-      e.dataTransfer.dropEffect='move';
-      slot.classList.add('drag-over');
-    });
+    slot.addEventListener('dragover',e=>{e.preventDefault();slot.classList.add('drag-over')});
     slot.addEventListener('dragleave',()=>slot.classList.remove('drag-over'));
     slot.addEventListener('drop',e=>{
       e.preventDefault();
       slot.classList.remove('drag-over');
       const from=Number(e.dataTransfer.getData('text/plain'));
       const to=Number(slot.dataset.setupSlot);
-      if(Number.isInteger(from)&&Number.isInteger(to))swapSlots(from,to);
+      if(Number.isInteger(from)&&Number.isInteger(to))swapSetupSlots(from,to);
     });
     slot.addEventListener('click',e=>{
-      if(e.target.closest('[data-remove-setup]'))return;
+      if(e.target.closest('[data-remove]'))return;
       const to=Number(slot.dataset.setupSlot);
       const s=state();
       if(selectedSetupSlot===null){
         if(!s.seeds[to])return;
         selectedSetupSlot=to;
-        renderOwnerControls();
+        renderBracket();
       }else{
-        swapSlots(selectedSetupSlot,to);
+        swapSetupSlots(selectedSetupSlot,to);
       }
     });
   });
 
-  document.querySelectorAll('[data-remove-setup]').forEach(btn=>{
-    btn.onclick=e=>{
-      e.stopPropagation();
-      const i=Number(btn.dataset.removeSetup);
-      const s=state();
-      const p=playerById.get(String(s.seeds[i]));
-      if(!confirm(`Remove ${p?.name||'this player'} from this tournament?`))return;
-      const next=[...s.seeds];
-      next[i]=null;
-      selectedSetupSlot=null;
-      saveSetup(next,s.bracket_size,'Player removed');
-    };
+  document.querySelectorAll('[data-remove]').forEach(btn=>btn.onclick=e=>{
+    e.stopPropagation();
+    const i=Number(btn.dataset.remove);
+    const s=state();
+    const p=playerById.get(String(s.seeds[i]));
+    if(!confirm(`Remove ${p?.name||'this player'} from the tournament?`))return;
+    const next=[...s.seeds];
+    next[i]=null;
+    selectedSetupSlot=null;
+    saveSetup(next,s.bracket_size,'Player removed');
   });
 }
 
@@ -391,36 +384,42 @@ function renderOwnerControls(){
   const used=new Set(s.seeds.filter(Boolean).map(String));
   const available=players.filter(p=>!used.has(String(p.id)));
   const filled=s.seeds.filter(Boolean).length;
-  const matches=s.bracket_size/2;
 
   panel.classList.remove('hidden');
-  panel.innerHTML=`
-    <div class="owner-control-bar">
-      <div class="owner-control-copy">
-        <div class="eyebrow">OWNER CONTROLS</div>
-        <h3>${s.started?'Tournament is live':'Build Round 1 matchups'}</h3>
-        <p>${s.started?'Seeds are locked while results exist. Use Reset Results if you truly need to rebuild matchups.':'Drag players between opponent slots. On phones, tap one player and then tap the slot you want to swap with.'}</p>
-      </div>
-      <div class="owner-control-actions">
-        <label><span>Size</span><select id="bracketSizeSelect" ${s.started?'disabled':''}>${[4,8,16,32].map(n=>`<option value="${n}" ${s.bracket_size===n?'selected':''}>${n}</option>`).join('')}</select></label>
-        <label class="owner-add-player"><span>Add player</span><select id="tournamentPlayerSelect" ${(!available.length||s.started)?'disabled':''}>${available.length?available.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join(''):'<option>No players available</option>'}</select></label>
-        <button id="addTournamentPlayer" class="btn small" ${(!available.length||filled>=s.bracket_size||s.started)?'disabled':''}>+ Add</button>
-        ${s.started?`<button id="resetTournamentResults" class="btn danger small">Reset Results</button>`:`<button id="startTournament" class="btn primary small" ${filled<2?'disabled':''}>Start Tournament</button>`}
-      </div>
-    </div>
-    <div class="owner-state-line"><span>${statusText(s)}</span><b>${filled}/${s.bracket_size} players</b></div>
-    ${s.started?`<div class="matchup-locked-note">🔒 Round 1 matchups are locked while the tournament is live.</div>`:`
-      <div class="setup-matchups">
-        ${Array.from({length:matches},(_,m)=>`<div class="setup-match-card"><div class="setup-match-title">Match ${m+1}</div>${setupSlotMarkup(s,m*2)}<div class="setup-vs">VS</div>${setupSlotMarkup(s,m*2+1)}</div>`).join('')}
-      </div>`}`;
 
-  const sizeSelect=$('#bracketSizeSelect');
-  if(sizeSelect)sizeSelect.onchange=async()=>{
-    const nextSize=Number(sizeSelect.value);
+  if(s.started){
+    panel.innerHTML=`
+      <div class="owner-simple-bar">
+        <div><span class="owner-dot live"></span><strong>Tournament is live</strong><small>Matchups are locked so results cannot jump backwards.</small></div>
+        <button id="resetTournamentResults" class="btn danger small">Reset Results & Unlock Setup</button>
+      </div>`;
+    $('#resetTournamentResults').onclick=()=>{
+      if(confirm(`Reset all ${currentKit().name} results? Matchups will stay, but the tournament returns to setup mode.`))resetTournament();
+    };
+    return;
+  }
+
+  panel.innerHTML=`
+    <div class="owner-simple-bar setup">
+      <div><span class="owner-dot"></span><strong>Setup mode</strong><small>Add players, then drag/tap them into the opponents you want.</small></div>
+      <div class="owner-simple-actions">
+        <label>Size
+          <select id="bracketSizeSelect">${[4,8,16,32].map(n=>`<option value="${n}" ${s.bracket_size===n?'selected':''}>${n}</option>`).join('')}</select>
+        </label>
+        <select id="tournamentPlayerSelect" ${available.length?'':'disabled'}>
+          ${available.length?available.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join(''):'<option>No players left to add</option>'}
+        </select>
+        <button id="addTournamentPlayer" class="btn small" ${(!available.length||filled>=s.bracket_size)?'disabled':''}>+ Add Player</button>
+        <button id="startTournament" class="btn primary small" ${filled<2?'disabled':''}>Start Tournament</button>
+      </div>
+    </div>`;
+
+  $('#bracketSizeSelect').onchange=async e=>{
+    const nextSize=Number(e.target.value);
     if(nextSize===s.bracket_size)return;
     if(nextSize<s.bracket_size&&s.seeds.slice(nextSize).some(Boolean)){
-      if(!confirm(`Changing to ${nextSize} slots removes players after slot ${nextSize}. Continue?`)){
-        sizeSelect.value=String(s.bracket_size);
+      if(!confirm(`Changing to ${nextSize} removes players after slot ${nextSize}. Continue?`)){
+        e.target.value=String(s.bracket_size);
         return;
       }
     }
@@ -430,158 +429,186 @@ function renderOwnerControls(){
     await saveSetup(next,nextSize,'Bracket size updated');
   };
 
-  const add=$('#addTournamentPlayer');
-  if(add)add.onclick=async()=>{
+  $('#addTournamentPlayer').onclick=async()=>{
     const pid=$('#tournamentPlayerSelect')?.value;
     if(!pid)return;
     const i=s.seeds.findIndex(x=>!x);
-    if(i<0){toast('This bracket is full.');return}
+    if(i<0){toast('Bracket is full.');return}
     const next=[...s.seeds];
     next[i]=pid;
     await saveSetup(next,s.bracket_size,'Player added');
   };
 
-  const start=$('#startTournament');
-  if(start)start.onclick=()=>{
-    if(!confirm(`Lock these ${currentKit().name} matchups and start the tournament?`))return;
-    startTournament();
+  $('#startTournament').onclick=()=>{
+    if(confirm(`Start ${currentKit().name} with these matchups? You cannot move players after this unless you reset results.`))startTournament();
   };
-
-  const reset=$('#resetTournamentResults');
-  if(reset)reset.onclick=()=>{
-    if(!confirm(`Reset every ${currentKit().name} result and unlock matchup editing? Seeds stay in place.`))return;
-    resetTournament();
-  };
-
-  if(!s.started)wireSetupDrag();
-  bindHeadFallbacks(panel);
 }
 
-function viewTabsMarkup(){
-  const tabs=[['winners','Winners'],['losers','Losers'],['finals','Finals'],['top8','Top 8']];
-  return `<div class="bracket-view-tabs">${tabs.map(([id,label])=>`<button class="bracket-view-tab ${activeView===id?'active':''}" data-bracket-view="${id}">${label}</button>`).join('')}</div>`;
+function renderSetupBoard(s){
+  const matches=s.bracket_size/2;
+  return `
+    <div class="simple-info setup-info">
+      <span>1</span><div><strong>Build the first round</strong><small>${isOwner()?'Drag a player onto another player to swap them. On mobile: tap one player, then tap another slot.':'The Owner is choosing the first-round opponents.'}</small></div>
+    </div>
+    <div class="setup-match-grid">
+      ${Array.from({length:matches},(_,m)=>`
+        <article class="setup-match-card">
+          <div class="setup-match-head"><strong>Match ${m+1}</strong><span>Round 1</span></div>
+          <div class="setup-opponents">
+            ${setupSlot(s,m*2)}
+            <b>VS</b>
+            ${setupSlot(s,m*2+1)}
+          </div>
+        </article>`).join('')}
+    </div>`;
 }
 
-function roundTabsMarkup(kind,s){
-  const count=kind==='winners'?roundCount(s.bracket_size):loserRoundCount(s.bracket_size);
-  const active=kind==='winners'?activeWinnerRound:activeLoserRound;
-  return `<div class="round-picker">${Array.from({length:count},(_,i)=>{
-    const r=i+1;
-    const label=kind==='winners'?roundLabel(s.bracket_size,r):loserRoundLabel(s.bracket_size,r);
-    return `<button class="round-pill ${active===r?'active':''}" data-round-kind="${kind}" data-round="${r}">${esc(label)}</button>`;
-  }).join('')}</div>`;
+function sectionButtons(){
+  const buttons=[
+    ['winners','Winners Bracket','Stay undefeated'],
+    ['losers','Losers Bracket','Second chance'],
+    ['finals','Finals','For the title'],
+    ['top8','Top 8','Final places']
+  ];
+  return `<div class="section-switcher">${buttons.map(([id,label,sub])=>`
+    <button class="${activeSection===id?'active':''}" data-section="${id}">
+      <strong>${label}</strong><small>${sub}</small>
+    </button>`).join('')}</div>`;
 }
 
-function matchSlotMarkup(playerId,winnerId,matchKey,s){
-  if(!playerId)return `<div class="focus-slot empty"><span>TBD</span></div>`;
+function playerRow(playerId,winnerId,key,s,kind,roundNo){
+  if(!playerId)return `<div class="match-player empty"><span>TBD</span></div>`;
   const p=playerById.get(String(playerId));
-  if(!p)return `<div class="focus-slot empty"><span>Unavailable player</span></div>`;
-  const selected=String(winnerId||'')===String(playerId);
-  const locked=Boolean(winnerId);
-  return `<div class="focus-slot ${selected?'winner':locked?'lost':''}">
+  if(!p)return `<div class="match-player empty"><span>Unavailable</span></div>`;
+  const won=String(winnerId||'')===String(playerId);
+  const done=Boolean(winnerId);
+
+  return `<div class="match-player ${won?'won':done?'lost':''}">
     ${headImg(p,36,p.name)}
-    <div class="focus-player-name"><strong>${esc(p.name)}</strong>${selected?'<small>Advanced</small>':locked?'<small>Eliminated from this match</small>':''}</div>
-    ${isOwner()&&s.started&&!locked?`<button class="tournament-advance" data-advance-key="${matchKey}" data-advance-player="${p.id}">Advance</button>`:''}
-    ${selected?'<span class="winner-check">✓</span>':''}
+    <div><strong>${esc(p.name)}</strong><small>${won?'Advanced':done?'Lost this match':''}</small></div>
+    ${isOwner()&&s.started&&!done?`<button class="advance-clean" data-advance-key="${key}" data-advance-player="${p.id}" data-kind="${kind}" data-round="${roundNo}">Advance</button>`:''}
+    ${won?'<span class="won-check">✓</span>':''}
   </div>`;
 }
 
-function renderRound(kind,s){
-  const max=kind==='winners'?roundCount(s.bracket_size):loserRoundCount(s.bracket_size);
-  if(kind==='winners')activeWinnerRound=Math.min(Math.max(1,activeWinnerRound),max);
+function renderRoundSection(kind,s){
+  const isW=kind==='winners';
+  const max=isW?roundCount(s.bracket_size):loserRoundCount(s.bracket_size);
+
+  if(isW)activeWinnerRound=Math.min(Math.max(1,activeWinnerRound),max);
   else activeLoserRound=Math.min(Math.max(1,activeLoserRound),max);
-  const r=kind==='winners'?activeWinnerRound:activeLoserRound;
-  const count=kind==='winners'?matchCount(s.bracket_size,r):loserMatchCount(s.bracket_size,r);
-  const title=kind==='winners'?roundLabel(s.bracket_size,r):loserRoundLabel(s.bracket_size,r);
-  const desc=kind==='winners'
-    ? 'Win to stay in the upper bracket. Your first loss sends you to the Losers Bracket.'
-    : (r%2===0?'This round receives players dropping from the Winners Bracket.':'Lose here and you are eliminated from the tournament.');
 
-  return `${roundTabsMarkup(kind,s)}
-    <section class="focus-round-card ${kind}">
-      <div class="focus-round-head"><div><span>${kind==='winners'?'UPPER BRACKET':'LOWER BRACKET'}</span><h3>${esc(title)}</h3></div><p>${desc}</p></div>
-      <div class="focus-match-grid">
-        ${Array.from({length:count},(_,m)=>{
-          const a=kind==='winners'?wbParticipant(r,m,0,s):lbParticipant(r,m,0,s);
-          const b=kind==='winners'?wbParticipant(r,m,1,s):lbParticipant(r,m,1,s);
-          const winner=kind==='winners'?wbWinner(s,r,m):lbWinner(s,r,m);
-          const key=kind==='winners'?wbKey(r,m):lbKey(r,m);
-          return `<article class="focus-match ${winner?'complete':''}">
-            <div class="focus-match-head"><strong>Match ${m+1}</strong>${winner?'<span>Complete</span>':'<span>Waiting</span>'}</div>
-            ${matchSlotMarkup(a,winner,key,s)}
-            <div class="focus-vs">VS</div>
-            ${matchSlotMarkup(b,winner,key,s)}
-          </article>`;
-        }).join('')}
-      </div>
-    </section>`;
-}
+  const r=isW?activeWinnerRound:activeLoserRound;
+  const count=isW?matchCount(s.bracket_size,r):loserMatchCount(s.bracket_size,r);
+  const label=isW?roundLabel(s.bracket_size,r):loserRoundLabel(s.bracket_size,r);
 
-function finalSlotMarkup(playerId,winnerId,key,s){
-  return matchSlotMarkup(playerId,winnerId,key,s);
+  const helper=isW
+    ? 'Winner moves forward. Loser drops to the Losers Bracket.'
+    : 'Winner stays alive. Loser is eliminated from the tournament.';
+
+  return `
+    <div class="round-toolbar">
+      <button class="round-arrow" data-round-move="-1" data-kind="${kind}" ${r<=1?'disabled':''}>‹</button>
+      <div><span>${isW?'WINNERS BRACKET':'LOSERS BRACKET'}</span><strong>${esc(label)}</strong><small>Round ${r} of ${max}</small></div>
+      <button class="round-arrow" data-round-move="1" data-kind="${kind}" ${r>=max?'disabled':''}>›</button>
+    </div>
+    <div class="round-explain">${helper}</div>
+    <div class="simple-match-grid">
+      ${Array.from({length:count},(_,m)=>{
+        const a=isW?wbParticipant(r,m,0,s):lbParticipant(r,m,0,s);
+        const b=isW?wbParticipant(r,m,1,s):lbParticipant(r,m,1,s);
+        const winner=isW?wbWinner(s,r,m):lbWinner(s,r,m);
+        const key=isW?wbKey(r,m):lbKey(r,m);
+        return `<article class="simple-match-card ${winner?'complete':''}">
+          <div class="simple-match-head"><strong>Match ${m+1}</strong><span>${winner?'Complete':'Waiting'}</span></div>
+          ${playerRow(a,winner,key,s,kind,r)}
+          <div class="simple-vs">VS</div>
+          ${playerRow(b,winner,key,s,kind,r)}
+        </article>`;
+      }).join('')}
+    </div>`;
 }
 
 function renderFinals(s){
-  const wbRounds=roundCount(s.bracket_size);
-  const lbRounds=loserRoundCount(s.bracket_size);
-  const wbChamp=wbWinner(s,wbRounds,0);
-  const lbChamp=lbWinner(s,lbRounds,0);
-  const gfWinner=s.winners.GF||null;
-  const resetNeeded=Boolean(gfWinner&&lbChamp&&String(gfWinner)===String(lbChamp));
-  const rfWinner=s.winners.RF||null;
+  const wr=roundCount(s.bracket_size);
+  const lr=loserRoundCount(s.bracket_size);
+  const wbChamp=wbWinner(s,wr,0);
+  const lbChamp=lbWinner(s,lr,0);
+  const gf=s.winners.GF||null;
+  const resetNeeded=Boolean(gf&&lbChamp&&String(gf)===String(lbChamp));
+  const rf=s.winners.RF||null;
+
   let champion=null;
-  if(gfWinner&&wbChamp&&String(gfWinner)===String(wbChamp))champion=gfWinner;
-  if(resetNeeded&&rfWinner)champion=rfWinner;
+  if(gf&&wbChamp&&String(gf)===String(wbChamp))champion=gf;
+  if(resetNeeded&&rf)champion=rf;
+
   const champ=champion?playerById.get(String(champion)):null;
 
-  return `<section class="finals-clean-grid">
-    <article class="finals-clean-card">
-      <div class="finals-card-head"><span>GRAND FINAL</span><h3>Winners Champ vs Losers Champ</h3></div>
-      <div class="finals-match">
-        ${finalSlotMarkup(wbChamp,gfWinner,'GF',s)}
-        <div class="focus-vs">VS</div>
-        ${finalSlotMarkup(lbChamp,gfWinner,'GF',s)}
-      </div>
-      <p>If the Losers Bracket champion wins this match, a bracket reset is required.</p>
+  return `<div class="finals-simple">
+    <article class="final-card">
+      <div class="final-label">GRAND FINAL</div>
+      <h3>Winners Champion vs Losers Champion</h3>
+      ${playerRow(wbChamp,gf,'GF',s,'finals',1)}
+      <div class="simple-vs">VS</div>
+      ${playerRow(lbChamp,gf,'GF',s,'finals',1)}
+      <p>If the Losers Bracket champion wins, one final reset match is played.</p>
     </article>
-    <article class="finals-clean-card ${resetNeeded?'':'disabled-final'}">
-      <div class="finals-card-head"><span>BRACKET RESET</span><h3>${resetNeeded?'Final deciding match':'Only appears if needed'}</h3></div>
-      ${resetNeeded?`<div class="finals-match">${finalSlotMarkup(wbChamp,rfWinner,'RF',s)}<div class="focus-vs">VS</div>${finalSlotMarkup(lbChamp,rfWinner,'RF',s)}</div>`:'<div class="final-placeholder">No reset is required yet.</div>'}
-    </article>
-    <article class="finals-clean-card champion-card">
-      <div class="finals-card-head"><span>CHAMPION</span><h3>${esc(currentKit().name)}</h3></div>
-      <div class="clean-champion">${champ?`${headImg(champ,56,champ.name)}<strong>${esc(champ.name)}</strong><small>🏆 Tournament Champion</small>`:'<strong>TBD</strong><small>Finals are not complete yet</small>'}</div>
-    </article>
-  </section>`;
-}
 
-function placementLabel(i){return ['1st','2nd','3rd','4th','5th','6th','7th','8th'][i]}
-function placementIcon(i){return ['🏆','🥈','🥉','4','5','6','7','8'][i]}
+    <article class="final-card ${resetNeeded?'':'inactive'}">
+      <div class="final-label">RESET FINAL</div>
+      <h3>${resetNeeded?'Final deciding match':'Only used if needed'}</h3>
+      ${resetNeeded?`${playerRow(wbChamp,rf,'RF',s,'finals',1)}<div class="simple-vs">VS</div>${playerRow(lbChamp,rf,'RF',s,'finals',1)}`:'<div class="final-empty">No bracket reset needed yet.</div>'}
+    </article>
+
+    <article class="final-card champion">
+      <div class="final-label">CHAMPION</div>
+      <h3>${esc(currentKit().name)}</h3>
+      <div class="champion-simple">
+        ${champ?`${headImg(champ,58,champ.name)}<strong>${esc(champ.name)}</strong><small>🏆 Tournament Champion</small>`:'<strong>TBD</strong><small>Finish the finals to crown a champion</small>'}
+      </div>
+    </article>
+  </div>`;
+}
 
 function renderTop8(s){
   const places=topEightPlacements(s);
-  return `<section class="top8-clean-card">
-    <div class="top8-head"><div><span>FINAL STANDINGS</span><h3>${esc(currentKit().name)} Top 8</h3></div><p>Standings fill automatically as players are eliminated. Same-round ties use original seed order.</p></div>
-    <div class="top8-grid">${places.map((pid,i)=>{
-      const p=pid?playerById.get(String(pid)):null;
-      return `<div class="top8-row place-${i+1} ${p?'':'tbd'}"><b>${placementIcon(i)}</b><span>${placementLabel(i)}</span><div>${p?`${headImg(p,38,p.name)}<strong>${esc(p.name)}</strong>`:'<strong>TBD</strong>'}</div></div>`;
-    }).join('')}</div>
-  </section>`;
+  const labels=['1st','2nd','3rd','4th','5th','6th','7th','8th'];
+  const icons=['🏆','🥈','🥉','4','5','6','7','8'];
+
+  return `<div class="top8-simple">
+    <div class="top8-title"><div><span>FINAL STANDINGS</span><h3>${esc(currentKit().name)} Top 8</h3></div><small>Updates automatically as players are eliminated.</small></div>
+    <div class="top8-list">
+      ${places.map((pid,i)=>{
+        const p=pid?playerById.get(String(pid)):null;
+        return `<div class="top8-item place-${i+1} ${p?'':'empty'}">
+          <b>${icons[i]}</b><span>${labels[i]}</span>
+          <div>${p?`${headImg(p,38,p.name)}<strong>${esc(p.name)}</strong>`:'<strong>TBD</strong>'}</div>
+        </div>`;
+      }).join('')}
+    </div>
+  </div>`;
 }
 
-function wireBracketControls(){
-  document.querySelectorAll('[data-bracket-view]').forEach(btn=>btn.onclick=()=>{
-    activeView=btn.dataset.bracketView;
+function wireBracket(){
+  document.querySelectorAll('[data-section]').forEach(btn=>btn.onclick=()=>{
+    activeSection=btn.dataset.section;
     renderBracket();
   });
-  document.querySelectorAll('[data-round-kind]').forEach(btn=>btn.onclick=()=>{
-    const r=Number(btn.dataset.round);
-    if(btn.dataset.roundKind==='winners')activeWinnerRound=r;
-    else activeLoserRound=r;
+
+  document.querySelectorAll('[data-round-move]').forEach(btn=>btn.onclick=()=>{
+    const delta=Number(btn.dataset.roundMove);
+    if(btn.dataset.kind==='winners')activeWinnerRound+=delta;
+    else activeLoserRound+=delta;
     renderBracket();
   });
+
   document.querySelectorAll('[data-advance-key]').forEach(btn=>btn.onclick=()=>{
-    advanceMatch(btn.dataset.advanceKey,btn.dataset.advancePlayer);
+    advanceMatch(
+      btn.dataset.advanceKey,
+      btn.dataset.advancePlayer,
+      btn.dataset.kind,
+      Number(btn.dataset.round||1)
+    );
   });
 }
 
@@ -589,26 +616,43 @@ function renderBracket(){
   const s=state();
   const kit=currentKit();
   const filled=s.seeds.filter(Boolean).length;
-  const placements=topEightPlacements(s);
-  const championReady=Boolean(placements[0]);
+  const championReady=Boolean(topEightPlacements(s)[0]);
 
-  $('#bracketEyebrow').textContent=`${kit.name.toUpperCase()} DOUBLE ELIMINATION`;
-  $('#bracketTitle').textContent=`${kit.name} Tournament`;
-  $('#bracketMeta').innerHTML=`<span>${s.bracket_size} slots</span><span>${filled} players</span><span>${s.started?'Live':'Setup'}</span><span>${championReady?'Champion set':'In progress'}</span>`;
+  $('#bracketEyebrow').textContent=`${kit.name.toUpperCase()} TOURNAMENT`;
+  $('#bracketTitle').textContent=kit.name;
+  $('#bracketMeta').innerHTML=`
+    <span>${filled}/${s.bracket_size} players</span>
+    <span>${s.started?'Live':'Setup'}</span>
+    <span>${championReady?'Champion set':'In progress'}</span>`;
 
   if(!filled){
-    $('#bracketViewport').innerHTML=`<div class="tournament-empty"><div><b>No players seeded yet.</b>${isOwner()?'Add players above, then drag them into their Round 1 opponents.':'The Owner has not seeded this bracket yet.'}</div></div>`;
+    $('#bracketViewport').innerHTML=`<div class="tournament-empty"><div><b>No players added yet.</b>${isOwner()?'Use the Owner controls above to add players.':'The bracket has not been set up yet.'}</div></div>`;
     return;
   }
 
-  let content='';
-  if(activeView==='winners')content=renderRound('winners',s);
-  else if(activeView==='losers')content=renderRound('losers',s);
-  else if(activeView==='finals')content=renderFinals(s);
-  else content=renderTop8(s);
+  if(!s.started){
+    $('#bracketViewport').innerHTML=renderSetupBoard(s);
+    wireSetup();
+    bindHeadFallbacks($('#bracketViewport'));
+    return;
+  }
 
-  $('#bracketViewport').innerHTML=`${viewTabsMarkup()}<div class="clean-view-body">${content}</div>`;
-  wireBracketControls();
+  let body='';
+  if(activeSection==='winners')body=renderRoundSection('winners',s);
+  else if(activeSection==='losers')body=renderRoundSection('losers',s);
+  else if(activeSection==='finals')body=renderFinals(s);
+  else body=renderTop8(s);
+
+  $('#bracketViewport').innerHTML=`
+    <div class="how-it-works">
+      <div><b>1</b><span><strong>Win</strong><small>Move forward</small></span></div>
+      <div><b>2</b><span><strong>First loss</strong><small>Drop to Losers</small></span></div>
+      <div><b>3</b><span><strong>Second loss</strong><small>Eliminated</small></span></div>
+    </div>
+    ${sectionButtons()}
+    <div class="simple-stage">${body}</div>`;
+
+  wireBracket();
   bindHeadFallbacks($('#bracketViewport'));
 }
 
@@ -631,7 +675,7 @@ async function detectAccess(){
 
 function subscribe(){
   try{
-    supabase.channel('nova-tournament-v4')
+    supabase.channel('nova-tournament-v5')
       .on('postgres_changes',{event:'UPDATE',schema:'public',table:'tournament_brackets'},payload=>{
         const incoming=normalizeBracket(payload.new);
         const existing=brackets.get(incoming.gamemode);
@@ -646,6 +690,7 @@ function subscribe(){
 async function load(){
   try{
     supabase=await getSupabase();
+
     const [playersRes,bracketsRes,assetsRes]=await Promise.all([
       supabase.from('players').select('id,name,avatar_url,minecraft_uuid').order('name'),
       supabase.from('tournament_brackets').select('gamemode,bracket_size,seeds,winners,started,revision,updated_at'),
@@ -663,6 +708,7 @@ async function load(){
     for(const row of bracketsRes.data||[])setBracket(row);
 
     await detectAccess();
+
     const brand=$('#brandMark');
     if(brand)brand.innerHTML=iconMarkup(assetValue(assets,'brand_logo'),'brand-icon');
 
