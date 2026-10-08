@@ -41,3 +41,14 @@ V3 TOP 8:
 - 3rd onward are calculated from Losers Bracket elimination order.
 - If two players are eliminated in the same Losers round, original seed breaks the tie so every place is unique.
 - Standings are read-only for public/Admin/Tester just like the bracket.
+
+V4 CLEAN BRACKET + STABILITY:
+- No giant sideways bracket. View Winners, Losers, Finals and Top 8 as tabs.
+- Winners/Losers show one selected round at a time in a responsive match grid.
+- Owner setup shows Round 1 as visual matchup cards. Drag players between opponent slots before the tournament starts.
+- Touch/mobile fallback: tap a player, then tap the destination slot to swap.
+- Explicit Start Tournament button locks matchups. Reset Results unlocks them again.
+- Advance buttons remain.
+- Advances now use an atomic single-match RPC with bracket revisions instead of re-saving the entire winners object.
+- Realtime updates ignore stale revisions, preventing old snapshots from putting players back.
+- The live Supabase backend migration for atomic updates/revisions has already been applied.
