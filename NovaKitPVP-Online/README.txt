@@ -33,3 +33,11 @@ Tournament features:
 Temporary removal later is simple: remove the Tournament links/page files and drop tournament_brackets + set_tournament_bracket.
 
 Update note: this version keeps using the existing `winners` JSON field, so no tournament database schema change is required. Old single-elimination winner keys are read as Winners Bracket results for compatibility.
+
+V3 TOP 8:
+- Each kit now has a live Final Standings panel.
+- Shows 1st (Champion), 2nd, 3rd, 4th, 5th, 6th, 7th and 8th.
+- 1st/2nd come from the Grand Final / Bracket Reset.
+- 3rd onward are calculated from Losers Bracket elimination order.
+- If two players are eliminated in the same Losers round, original seed breaks the tie so every place is unique.
+- Standings are read-only for public/Admin/Tester just like the bracket.

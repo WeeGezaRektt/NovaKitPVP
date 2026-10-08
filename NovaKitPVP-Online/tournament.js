@@ -60,7 +60,108 @@ function loserMatchCount(size,lbRound){
 function wbKey(r,m){return `W:${r}-${m}`}
 function lbKey(r,m){return `L:${r}-${m}`}
 function wbWinner(state,r,m){return state.winners[wbKey(r,m)]||null}
+
 function lbWinner(state,r,m){return state.winners[lbKey(r,m)]||null}
+
+function lbLoser(roundNo,matchNo,state){
+  const a=lbParticipant(roundNo,matchNo,0,state);
+  const b=lbParticipant(roundNo,matchNo,1,state);
+  const winner=lbWinner(state,roundNo,matchNo);
+  if(!winner)return null;
+  if(String(winner)===String(a))return b||null;
+  if(String(winner)===String(b))return a||null;
+  return null;
+}
+
+function seedIndex(state,playerId){
+  const idx=state.seeds.findIndex(x=>String(x||'')===String(playerId||''));
+  return idx<0?9999:idx;
+}
+
+function orderBySeed(state,ids){
+  return ids.filter(Boolean).sort((a,b)=>seedIndex(state,a)-seedIndex(state,b));
+}
+
+function topEightPlacements(state){
+  const places=Array(8).fill(null);
+  const wbRounds=roundCount(state.bracket_size);
+  const lbRounds=loserRoundCount(state.bracket_size);
+
+  const wbChamp=wbWinner(state,wbRounds,0);
+  const lbChamp=lbWinner(state,lbRounds,0);
+  const gfWinner=state.winners.GF||null;
+  const resetNeeded=Boolean(gfWinner&&lbChamp&&String(gfWinner)===String(lbChamp));
+  const rfWinner=state.winners.RF||null;
+
+  if(gfWinner&&wbChamp&&String(gfWinner)===String(wbChamp)){
+    places[0]=gfWinner;
+    places[1]=lbChamp||null;
+  }else if(resetNeeded&&rfWinner){
+    places[0]=rfWinner;
+    places[1]=String(rfWinner)===String(wbChamp)?lbChamp:wbChamp;
+  }
+
+  if(lbRounds>=1) places[2]=lbLoser(lbRounds,0,state);
+
+  if(lbRounds>=2) places[3]=lbLoser(lbRounds-1,0,state);
+
+  if(lbRounds>=3){
+    const count5=loserMatchCount(state.bracket_size,lbRounds-2);
+    const eliminated5=orderBySeed(
+      state,
+      Array.from({length:count5},(_,m)=>lbLoser(lbRounds-2,m,state))
+    );
+    places[4]=eliminated5[0]||null;
+    places[5]=eliminated5[1]||null;
+  }
+
+  if(lbRounds>=4){
+    const count7=loserMatchCount(state.bracket_size,lbRounds-3);
+    const eliminated7=orderBySeed(
+      state,
+      Array.from({length:count7},(_,m)=>lbLoser(lbRounds-3,m,state))
+    );
+    places[6]=eliminated7[0]||null;
+    places[7]=eliminated7[1]||null;
+  }
+
+  return places;
+}
+
+function placementLabel(index){
+  return ['1st','2nd','3rd','4th','5th','6th','7th','8th'][index]||`${index+1}th`;
+}
+
+function placementIcon(index){
+  return ['🏆','🥈','🥉','4','5','6','7','8'][index]||String(index+1);
+}
+
+function renderPlacements(state){
+  const kit=currentKit();
+  const places=topEightPlacements(state);
+
+  return `<section class="tournament-placements-card">
+    <div class="tournament-placements-head">
+      <div>
+        <span class="tournament-section-kicker finals">FINAL STANDINGS</span>
+        <h3>${esc(kit.name)} Top 8</h3>
+      </div>
+      <p>Placements update automatically as players are eliminated. Players eliminated in the same Losers round are ordered by their original seed.</p>
+    </div>
+    <div class="tournament-placements-grid">
+      ${places.map((pid,i)=>{
+        const p=pid?playerById.get(String(pid)):null;
+        return `<div class="tournament-placement place-${i+1} ${p?'set':'tbd'}">
+          <span class="tournament-place-rank">${placementIcon(i)}</span>
+          <span class="tournament-place-label">${placementLabel(i)}</span>
+          <span class="tournament-place-player">
+            ${p?`${headImg(p,38,p.name)}<strong>${esc(p.name)}</strong>`:'<strong>TBD</strong>'}
+          </span>
+        </div>`;
+      }).join('')}
+    </div>
+  </section>`;
+}
 
 function wbParticipant(roundNo,matchNo,side,state){
   if(roundNo===1)return state.seeds[(matchNo*2)+side]||null;
@@ -473,6 +574,7 @@ function renderBracket(){
         <p>The Winners Bracket champion faces the Losers Bracket champion. A reset final appears automatically if needed.</p>
       </div>
       ${renderFinals(state)}
+      ${renderPlacements(state)}
     </div>`;
 
   if(isOwner()){
