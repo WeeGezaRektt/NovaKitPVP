@@ -1,0 +1,20 @@
+@import url('https://fonts.cdnfonts.com/css/minecraft-3');
+
+/* NovaKitPVP global Minecraft font override */
+html,
+body,
+body *,
+button,
+input,
+select,
+textarea,
+option,
+dialog,
+::placeholder {
+  font-family: 'Minecraft', 'Segoe UI Symbol', 'Noto Color Emoji', monospace !important;
+}
+
+/* Keep the pixel font crisp while preserving the existing Nova layout. */
+body {
+  font-synthesis: weight;
+}
