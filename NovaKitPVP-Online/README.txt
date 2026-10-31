@@ -1,27 +1,29 @@
-NovaKitPVP V22 Update
-=====================
+NovaKitPVP V22.1 Update
+=======================
 
-Changes:
-1. Top navigation now closer to mctiers style
-   - Rankings / Tournament / Discord links
-   - "Discord" instead of "Join Discord"
-   - Platform filters [Full Tierlist] [Java Only] [Bedrock Only] on the right
-2. Previous fixes still included:
-   - No more empty "–" tier slots (v11.js disabled)
-   - Active tiers on the left, retired on the right
-   - Colored tier badges
-   - Denser overall rows
+What's new:
+1. Horizontal kit tabs like mctiers
+   - Overall / Sword / Mace / Vanilla / ... across the top
+   - Active tab underlined
+2. Information button next to the tabs (no Discord / IP)
+3. Left sidebar removed — full-width content
+4. Top nav still has Rankings / Tournament / Discord + platform filters
 
-Files to upload (drag all into NovaKitPVP-Online):
+Previous fixes still included:
+- No empty "–" tier slots
+- Active tiers left, retired right
+- Colored badges + denser rows
+
+Files to upload (all into NovaKitPVP-Online):
 - index.html
+- app.js
 - v11.js
 - v21.css
 - v22.css
-- app.js
 
 Steps:
 1. Unzip
-2. Go to GitHub → NovaKitPVP-Online
-3. Drag the 5 files in
+2. GitHub → NovaKitPVP-Online
+3. Drag all 5 files
 4. Commit / Save
-5. Wait for Vercel, then hard-refresh (Ctrl+Shift+R)
+5. Hard-refresh after Vercel deploys (Ctrl+Shift+R)

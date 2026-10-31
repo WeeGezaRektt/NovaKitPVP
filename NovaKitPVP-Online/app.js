@@ -129,8 +129,20 @@ function refreshPlayers(){clearTimeout(refreshTimer);refreshTimer=setTimeout(asy
 },250)}
 async function refreshAssets(){const {data}=await supabase.from('site_assets').select('asset_key,asset_value');if(data){assets=rowsToAssets(data);applyBrand();applyDiscord();renderNav();render()}}
 function renderNav(){
-  $('#gameNav').innerHTML=`<button class="game-link ${currentMode==='overall'?'active':''}" data-mode="overall"><span class="game-icon">⌂</span>Overall</button>`+GAMEMODES.map(g=>`<button class="game-link ${currentMode===g.id?'active':''}" data-mode="${g.id}"><span class="game-icon">${modeIcon(g)}</span>${esc(g.name)}</button>`).join('');
-  document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{currentMode=b.dataset.mode;renderNav();render()})
+  const overallBtn = `<button class="kit-tab ${currentMode==='overall'?'active':''}" data-mode="overall"><span class="kit-tab-icon">🏆</span><span class="kit-tab-label">Overall</span></button>`;
+  const modeBtns = GAMEMODES.map(g=>`<button class="kit-tab ${currentMode===g.id?'active':''}" data-mode="${g.id}"><span class="kit-tab-icon">${modeIcon(g)}</span><span class="kit-tab-label">${esc(g.name)}</span></button>`).join('');
+  const nav = $('#gameNav');
+  if(nav){
+    nav.innerHTML = overallBtn + modeBtns;
+    nav.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{currentMode=b.dataset.mode;renderNav();render()});
+  }
+  // Wire secondary Information button if present
+  const info2 = document.getElementById('novaInfoBtn2');
+  const info1 = document.getElementById('novaInfoBtn');
+  if(info2 && info1 && !info2.dataset.bound){
+    info2.dataset.bound = '1';
+    info2.onclick = () => info1.click();
+  }
 }
 function render(){
   $('#playerCount').textContent=players.length;
