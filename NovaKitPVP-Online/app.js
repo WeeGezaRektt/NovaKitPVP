@@ -26,9 +26,21 @@ function countedTier(t){
 }
 function shownTier(t){
   if(!t)return null;
-  if(t.active_tier&&t.active_tier!=='Unranked')return {tier:t.active_tier,type:'active',label:t.active_tier};
-  if(t.retired_tier)return {tier:t.retired_tier,type:'retired',label:t.retired_tier};
-  if(t.peak_tier)return {tier:t.peak_tier,type:'peak',label:`P${t.peak_tier}`};
+  // MCTiers-style rule: if the player is retired in this kit, prefer showing the peak tier
+  // (or the stored retired_tier value). This matches mctiers behaviour.
+  if(t.retired_tier){
+    // Prefer clean peak if available, otherwise use the retired value (RHT1 etc.)
+    if(t.peak_tier && t.peak_tier !== 'Unranked'){
+      return {tier:t.peak_tier,type:'retired',label:t.peak_tier};
+    }
+    return {tier:t.retired_tier,type:'retired',label:t.retired_tier};
+  }
+  if(t.active_tier && t.active_tier !== 'Unranked'){
+    return {tier:t.active_tier,type:'active',label:t.active_tier};
+  }
+  if(t.peak_tier && t.peak_tier !== 'Unranked'){
+    return {tier:t.peak_tier,type:'peak',label:t.peak_tier};
+  }
   return null;
 }
 function overallTierToken(g,t){
