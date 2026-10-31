@@ -1,17 +1,20 @@
-NovaKitPVP V21.1 Update
+NovaKitPVP V21.2 Update
 =======================
 
 What this does:
 - Makes the overall leaderboard denser (less zoomed out)
 - Adds proper colored tier badges like mctiers
 - Fully supports retired tiers with dashed rings + muted look
-- Updated display logic to follow MCTiers rule:
-  → If a player is retired in a kit, show their peak tier (or retired value)
+- Updated display logic to follow MCTiers rules:
+  1. If a player is retired in a kit → show their peak / retired tier
+  2. Active tiers always appear on the LEFT
+  3. Retired tiers appear on the RIGHT
+  4. Within each group: best → worst
 
 Files included:
-- v21.css          → new denser layout + colored badges (including retired)
+- v21.css          → denser layout + colored badges (including retired)
 - index.html       → loads the new CSS
-- app.js           → updated shownTier logic (MCTiers-style)
+- app.js           → updated shownTier + overallBadges sorting
 
 How to install (your usual method):
 1. Download and unzip this folder

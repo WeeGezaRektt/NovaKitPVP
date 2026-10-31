@@ -49,7 +49,34 @@ function overallTierToken(g,t){
   const tip=`${g.name}: ${shown.label} · ${counted.points} pts counted${counted.tier&&counted.tier!==shown.tier?` from ${counted.type==='peak'?'peak ':''}${counted.tier}`:''}`;
   return `<span class="overall-tier-token ${shown.label.toLowerCase()} ${shown.type}" data-tier-tip="${esc(tip)}" aria-label="${esc(tip)}"><span class="overall-kit-circle">${modeIcon(g)}</span><b>${esc(shown.label)}</b></span>`;
 }
-function overallBadges(p){return GAMEMODES.map(g=>overallTierToken(g,rowForMode(p,g))).filter(Boolean).join('')||'<span class="muted">Unranked</span>'}
+function overallBadges(p){
+  // Collect all real tier tokens for this player
+  const tokens = [];
+  for(const g of GAMEMODES){
+    const t = rowForMode(p,g);
+    const shown = shownTier(t);
+    if(!shown) continue;
+    const counted = countedTier(t);
+    tokens.push({
+      g,
+      t,
+      shown,
+      counted,
+      // sort helpers
+      isRetired: shown.type === 'retired',
+      points: counted.points || 0
+    });
+  }
+  if(!tokens.length) return '<span class="muted">Unranked</span>';
+
+  // Sort: active first, then retired. Within each group: best (highest points) → worst
+  tokens.sort((a,b)=>{
+    if(a.isRetired !== b.isRetired) return a.isRetired ? 1 : -1; // active (false) before retired (true)
+    return b.points - a.points; // higher points first
+  });
+
+  return tokens.map(({g,t})=>overallTierToken(g,t)).join('');
+}
 function sortedOverall(list=players){return [...list].sort((a,b)=>totalPoints(b)-totalPoints(a)||a.name.localeCompare(b.name))}
 function modeIcon(g){return iconMarkup(assetValue(assets,g.assetKey),'asset-icon')}
 function applyBrand(){const el=$('#brandMark');if(el)el.innerHTML=iconMarkup(assetValue(assets,'brand_logo'),'brand-icon')}
@@ -147,7 +174,7 @@ function positionBadge(place){return `<span class="profile-position-badge ${plac
 function openProfile(p){
   if(!p)return;
   const pts=totalPoints(p),rank=rankFor(pts,assets),place=sortedOverall().findIndex(x=>x.id===p.id)+1;
-  const tokens=GAMEMODES.map(g=>overallTierToken(g,rowForMode(p,g))).filter(Boolean).join('')||'<span class="muted">Unranked</span>';
+  const tokens=overallBadges(p);
   $('#profileBody').innerHTML=`<div class="ref-profile"><div class="profile-avatar-ring">${headImg(p,112,p.name)}</div><h2>${esc(p.name)}</h2><div class="profile-rank-pill"><span>${iconMarkup(rank.icon,'rank-icon')}</span>${esc(rank.name)}</div><div class="profile-region-name">${esc(REGION_NAMES[p.region]||p.region||'')}</div><section class="ref-profile-section"><h3>POSITION</h3><div class="profile-position-card">${positionBadge(place)}<strong>🏆 OVERALL <em>(${pts} points)</em></strong></div></section><section class="ref-profile-section"><h3>TIERS</h3><div class="profile-tier-token-box">${tokens}</div></section><section class="ref-profile-section"><h3>POINTS BY KIT</h3><div class="profile-breakdown">${GAMEMODES.map(g=>{const t=rowForMode(p,g)||{};const counted=countedTier(t);const active=t.active_tier&&t.active_tier!=='Unranked'?t.active_tier:'Unranked';return `<div class="profile-breakdown-row"><span><span class="inline-kit-icon">${modeIcon(g)}</span><b>${esc(g.name)}</b><small>Current ${esc(active)}${t.peak_tier?` · Peak ${esc(t.peak_tier)}`:''}</small></span><strong>${counted.points} pts</strong></div>`}).join('')}</div></section></div>`;
   $('#profileDialog').showModal();
   bindHeadFallbacks($('#profileDialog'));
