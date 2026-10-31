@@ -1,0 +1,303 @@
+/* V21 — Denser overall leaderboard + mctiers-style tier badges (active + retired) */
+
+/* ===== Denser overall rows ===== */
+.ref-leaderboard {
+  gap: 6px !important;
+}
+
+.ref-player-row {
+  grid-template-columns: 140px minmax(200px, 1.1fr) 64px minmax(320px, auto) !important;
+  min-height: 68px !important;
+  border-radius: 12px !important;
+  background: #111923 !important;
+  border-color: #1d2936 !important;
+}
+
+.ref-player-row:hover {
+  border-color: #314154 !important;
+  background: #141e29 !important;
+  transform: none !important;
+}
+
+.rank-strip {
+  height: 68px !important;
+  border-radius: 11px 0 0 11px !important;
+}
+
+.rank-strip .place {
+  font-size: 26px !important;
+  padding-left: 12px !important;
+}
+
+.body-render {
+  right: 12px !important;
+  bottom: -14px !important;
+  width: 58px !important;
+  height: 80px !important;
+}
+
+.body-render img {
+  height: 76px !important;
+  max-height: 76px !important;
+}
+
+.ref-player-row > .ident {
+  padding: 0 14px !important;
+}
+
+.ref-player-row > .ident strong {
+  font-size: 17px !important;
+  letter-spacing: -0.2px !important;
+}
+
+.subline {
+  margin-top: 3px !important;
+}
+
+.ref-rank {
+  font-size: 12px !important;
+  gap: 6px !important;
+}
+
+.ref-rank em {
+  font-size: 11px !important;
+}
+
+.row-region .region {
+  font-size: 12px !important;
+  height: 34px !important;
+  min-width: 36px !important;
+  padding: 0 7px !important;
+  border-radius: 7px !important;
+}
+
+.ref-tiers {
+  padding: 0 12px !important;
+  gap: 6px !important;
+  flex-wrap: nowrap !important;
+}
+
+/* ===== Tier tokens – mctiers style ===== */
+.overall-tier-token {
+  position: relative;
+  display: grid;
+  grid-template-rows: 28px 14px;
+  justify-items: center;
+  align-items: start;
+  min-width: 30px;
+  height: 44px;
+  cursor: help;
+  overflow: visible;
+}
+
+.overall-kit-circle {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: #081018;
+  border: 2px solid #25394b;
+  box-shadow: inset 0 0 0 2px #101b26;
+  transition: border-color 0.12s, box-shadow 0.12s;
+}
+
+.overall-kit-circle .asset-icon,
+.overall-kit-circle img {
+  width: 17px;
+  height: 17px;
+  max-width: 17px;
+  max-height: 17px;
+  object-fit: contain;
+  display: block;
+}
+
+.overall-tier-token > b {
+  font-size: 10px;
+  line-height: 13px;
+  padding: 0 5px;
+  border-radius: 6px;
+  background: #1c2631;
+  color: #d7dee7;
+  white-space: nowrap;
+  z-index: 2;
+  font-weight: 800;
+  letter-spacing: 0.2px;
+}
+
+/* Active tier colors (mctiers-style) */
+.overall-tier-token.active.ht1 .overall-kit-circle,
+.overall-tier-token.ht1:not(.retired) .overall-kit-circle {
+  border-color: #f0c735;
+  box-shadow: inset 0 0 0 2px #3b3114;
+}
+.overall-tier-token.active.ht1 > b,
+.overall-tier-token.ht1:not(.retired) > b {
+  color: #ffd23f;
+  background: #2a2310;
+}
+
+.overall-tier-token.active.lt1 .overall-kit-circle,
+.overall-tier-token.lt1:not(.retired) .overall-kit-circle {
+  border-color: #9c8a2b;
+  box-shadow: inset 0 0 0 2px #312d14;
+}
+.overall-tier-token.active.lt1 > b,
+.overall-tier-token.lt1:not(.retired) > b {
+  color: #e0bf52;
+  background: #28210f;
+}
+
+.overall-tier-token.active.ht2 .overall-kit-circle,
+.overall-tier-token.ht2:not(.retired) .overall-kit-circle {
+  border-color: #b8cadb;
+  box-shadow: inset 0 0 0 2px #2a3642;
+}
+.overall-tier-token.active.ht2 > b,
+.overall-tier-token.ht2:not(.retired) > b {
+  color: #bdd0e0;
+  background: #1e2832;
+}
+
+.overall-tier-token.active.lt2 .overall-kit-circle,
+.overall-tier-token.lt2:not(.retired) .overall-kit-circle {
+  border-color: #8a9aab;
+  box-shadow: inset 0 0 0 2px #252f3a;
+}
+.overall-tier-token.active.lt2 > b,
+.overall-tier-token.lt2:not(.retired) > b {
+  color: #aeb9ca;
+  background: #1b222a;
+}
+
+.overall-tier-token.active.ht3 .overall-kit-circle,
+.overall-tier-token.ht3:not(.retired) .overall-kit-circle {
+  border-color: #ff984f;
+  box-shadow: inset 0 0 0 2px #3d2614;
+}
+.overall-tier-token.active.ht3 > b,
+.overall-tier-token.ht3:not(.retired) > b {
+  color: #ff984f;
+  background: #2c1a0f;
+}
+
+.overall-tier-token.active.lt3 .overall-kit-circle,
+.overall-tier-token.lt3:not(.retired) .overall-kit-circle {
+  border-color: #e57f40;
+  box-shadow: inset 0 0 0 2px #352012;
+}
+.overall-tier-token.active.lt3 > b,
+.overall-tier-token.lt3:not(.retired) > b {
+  color: #e57f40;
+  background: #26160e;
+}
+
+.overall-tier-token.active.ht4 .overall-kit-circle,
+.overall-tier-token.ht4:not(.retired) .overall-kit-circle {
+  border-color: #ff718d;
+  box-shadow: inset 0 0 0 2px #3a1a22;
+}
+.overall-tier-token.active.ht4 > b,
+.overall-tier-token.ht4:not(.retired) > b {
+  color: #ff718d;
+  background: #2b1118;
+}
+
+.overall-tier-token.active.lt4 .overall-kit-circle,
+.overall-tier-token.lt4:not(.retired) .overall-kit-circle {
+  border-color: #d45a73;
+  box-shadow: inset 0 0 0 2px #32141c;
+}
+.overall-tier-token.active.lt4 > b,
+.overall-tier-token.lt4:not(.retired) > b {
+  color: #d45a73;
+  background: #241016;
+}
+
+.overall-tier-token.active.ht5 .overall-kit-circle,
+.overall-tier-token.ht5:not(.retired) .overall-kit-circle {
+  border-color: #8bc9ff;
+  box-shadow: inset 0 0 0 2px #1a2e3d;
+}
+.overall-tier-token.active.ht5 > b,
+.overall-tier-token.ht5:not(.retired) > b {
+  color: #8bc9ff;
+  background: #102333;
+}
+
+.overall-tier-token.active.lt5 .overall-kit-circle,
+.overall-tier-token.lt5:not(.retired) .overall-kit-circle {
+  border-color: #7298bd;
+  box-shadow: inset 0 0 0 2px #182837;
+}
+.overall-tier-token.active.lt5 > b,
+.overall-tier-token.lt5:not(.retired) > b {
+  color: #7298bd;
+  background: #101d28;
+}
+
+/* ===== Retired tiers (mctiers-style treatment) ===== */
+/* Same core colors as active, but slightly muted + dashed ring so they are clearly retired */
+.overall-tier-token.retired .overall-kit-circle {
+  opacity: 0.78;
+  border-style: dashed !important;
+}
+
+.overall-tier-token.retired > b {
+  opacity: 0.85;
+  font-style: italic;
+}
+
+/* Keep the color mapping for RHT / RLT so they still look correct */
+.overall-tier-token.rht1 .overall-kit-circle { border-color: #f0c735; box-shadow: inset 0 0 0 2px #3b3114; }
+.overall-tier-token.rht1 > b { color: #ffd23f; background: #2a2310; }
+
+.overall-tier-token.rlt1 .overall-kit-circle { border-color: #9c8a2b; box-shadow: inset 0 0 0 2px #312d14; }
+.overall-tier-token.rlt1 > b { color: #e0bf52; background: #28210f; }
+
+.overall-tier-token.rht2 .overall-kit-circle { border-color: #b8cadb; box-shadow: inset 0 0 0 2px #2a3642; }
+.overall-tier-token.rht2 > b { color: #bdd0e0; background: #1e2832; }
+
+.overall-tier-token.rlt2 .overall-kit-circle { border-color: #8a9aab; box-shadow: inset 0 0 0 2px #252f3a; }
+.overall-tier-token.rlt2 > b { color: #aeb9ca; background: #1b222a; }
+
+/* Tooltip (keep existing behavior) */
+.overall-tier-token::after {
+  content: attr(data-tier-tip);
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 10px);
+  transform: translateX(-50%);
+  white-space: nowrap;
+  background: #071019;
+  color: #ecf3fa;
+  border: 1px solid #32465a;
+  padding: 7px 9px;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 700;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 100;
+  transition: 0.12s;
+}
+.overall-tier-token:hover::after {
+  opacity: 1;
+}
+
+/* Slightly tighter large-screen version so it doesn’t feel huge */
+@media (min-width: 1400px) {
+  .ref-player-row {
+    grid-template-columns: 150px minmax(220px, 1.1fr) 70px minmax(360px, auto) !important;
+    min-height: 72px !important;
+  }
+  .rank-strip { height: 72px !important; }
+  .rank-strip .place { font-size: 28px !important; }
+  .body-render { width: 62px !important; height: 86px !important; }
+  .body-render img { height: 82px !important; }
+  .ref-player-row > .ident strong { font-size: 18px !important; }
+  .overall-tier-token { grid-template-rows: 30px 14px; height: 46px; min-width: 32px; }
+  .overall-kit-circle { width: 30px; height: 30px; }
+  .overall-kit-circle .asset-icon,
+  .overall-kit-circle img { width: 18px; height: 18px; max-width: 18px; max-height: 18px; }
+}

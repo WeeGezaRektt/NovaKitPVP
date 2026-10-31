@@ -1,30 +1,18 @@
-NovaKitPVP — Nova Space + Info Upgrade
+NovaKitPVP V21 Update
+=====================
 
-Add/replace these files inside NovaKitPVP-Online:
-- index.html
-- admin.html
-- tournament.html
-- nova-theme.css   (new)
-- nova-info.js     (new)
+What this does:
+- Makes the overall leaderboard denser (less zoomed out)
+- Adds proper colored tier badges like mctiers
+- Fully supports retired tiers (RHT1, RLT1, etc.) with dashed rings + muted look
 
-WHAT CHANGED
-- New Info button on the public rankings page.
-- Info popup shows exact tier points:
-  HT1 60, LT1 45, HT2 30, LT2 20, HT3 10, LT3 6,
-  HT4 4, LT4 3, HT5 2, LT5 1, Unranked 0.
-- Retired points:
-  RHT1 60, RLT1 45, RHT2 30, RLT2 20.
-- Overall rank thresholds:
-  Combat GrandMaster 400+
-  Combat Master 250+
-  Combat Ace 100+
-  Combat Specialist 50+
-  Combat Cadet 20+
-  Combat Novice 10+
-  Rookie 0+
-- Explains that current/peak/retired do NOT stack in the same kit;
-  only the strongest achieved value counts.
-- Adds a subtle purple-space Nova backdrop with stars and red nebula accents.
-- Theme also applies to Staff and Tournament pages.
-- Mobile and reduced-motion friendly.
-- Keeps the existing Minecraft font setup.
+How to install (your usual method):
+1. Download and unzip this folder
+2. Go to your GitHub repo → NovaKitPVP-Online folder
+3. Drag these 2 files into the GitHub upload:
+   - v21.css          (new file)
+   - index.html       (replaces the old one)
+4. Commit / Save changes
+5. Vercel will automatically redeploy
+
+That's it. After the deploy finishes, refresh the site.
