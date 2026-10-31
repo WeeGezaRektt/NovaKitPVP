@@ -1,29 +1,29 @@
-NovaKitPVP V21.2 Update
-=======================
+NovaKitPVP V21.3 Update (important fix)
+=======================================
 
-What this does:
-- Makes the overall leaderboard denser (less zoomed out)
-- Adds proper colored tier badges like mctiers
-- Fully supports retired tiers with dashed rings + muted look
-- Updated display logic to follow MCTiers rules:
-  1. If a player is retired in a kit → show their peak / retired tier
-  2. Active tiers always appear on the LEFT
-  3. Retired tiers appear on the RIGHT
-  4. Within each group: best → worst
+Problem found:
+v11.js was forcing every player to always show 10 slots and
+filling empty ones with "–". It also reset the order, which
+broke active-left / retired-right sorting.
 
-Files included:
-- v21.css          → denser layout + colored badges (including retired)
-- index.html       → loads the new CSS
-- app.js           → updated shownTier + overallBadges sorting
+This update:
+- Disables the old v11.js behaviour
+- Keeps denser layout + colored badges (v21.css)
+- Keeps correct MCTiers logic in app.js:
+  • Active tiers on the LEFT
+  • Retired tiers on the RIGHT
+  • Best → worst within each group
+  • Only real tiers are shown (no empty circles)
 
-How to install (your usual method):
-1. Download and unzip this folder
-2. Go to your GitHub repo → NovaKitPVP-Online folder
-3. Drag these 3 files into the GitHub upload:
-   - v21.css
-   - index.html
-   - app.js
-4. Commit / Save changes
-5. Vercel will automatically redeploy
+Files to upload:
+- v11.js       ← important (stops the empty slots)
+- v21.css
+- index.html
+- app.js
 
-That's it. After the deploy finishes, refresh the site.
+How to install:
+1. Download & unzip
+2. Go to GitHub → NovaKitPVP-Online
+3. Drag all 4 files in
+4. Commit / Save
+5. Wait for Vercel, then hard-refresh the site (Ctrl+Shift+R)
