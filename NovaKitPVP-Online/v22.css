@@ -1,0 +1,165 @@
+/* V22 — mctiers-style top navigation */
+
+.topbar.mctiers-style {
+  height: 64px !important;
+  padding: 0 22px !important;
+  gap: 18px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  border-bottom: 1px solid rgba(255,255,255,.06) !important;
+}
+
+.topbar.mctiers-style .brand {
+  flex: 0 0 auto;
+  margin-right: 8px;
+}
+
+.top-nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 12px;
+}
+
+.top-nav-link {
+  display: inline-flex;
+  align-items: center;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 9px;
+  color: #9a8fa3;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: .15s ease;
+  border: 1px solid transparent;
+}
+
+.top-nav-link:hover {
+  color: #f0e6f4;
+  background: rgba(255,255,255,.04);
+}
+
+.top-nav-link.active {
+  color: #fff;
+  background: rgba(163,76,255,.12);
+  border-color: rgba(163,76,255,.25);
+}
+
+.top-nav-link.discord-link:not(.disabled) {
+  color: #b9c0ff;
+}
+
+.top-nav-link.disabled {
+  opacity: .45;
+  pointer-events: none;
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+
+/* Platform filters – cleaner mctiers-like pills */
+.topbar.mctiers-style .platform-filters {
+  display: flex !important;
+  align-items: center;
+  gap: 5px !important;
+  margin: 0 !important;
+  padding: 4px !important;
+  border: 1px solid #2b2030 !important;
+  border-radius: 11px !important;
+  background: #0d0910 !important;
+  box-shadow: inset 0 1px rgba(255,255,255,.025);
+}
+
+.topbar.mctiers-style .platform-filter {
+  height: 32px !important;
+  padding: 0 12px !important;
+  border-radius: 8px !important;
+  font-size: 12px !important;
+  font-weight: 750 !important;
+  border: 1px solid transparent !important;
+  background: transparent !important;
+  color: #887b8c !important;
+}
+
+.topbar.mctiers-style .platform-filter:hover {
+  color: #e4d8e8 !important;
+  background: #17111b !important;
+}
+
+.topbar.mctiers-style .platform-filter.active {
+  color: #fff !important;
+  border-color: #704391 !important;
+  background: linear-gradient(135deg,#7438bc,#b52c61) !important;
+  box-shadow: 0 4px 14px rgba(138,50,196,.18) !important;
+}
+
+.topbar.mctiers-style .search {
+  min-width: 180px !important;
+  height: 36px !important;
+  font-size: 13px !important;
+}
+
+.topbar.mctiers-style .nova-info-btn {
+  width: 36px !important;
+  min-width: 36px !important;
+  height: 36px !important;
+  font-size: 16px !important;
+}
+
+.topbar.mctiers-style .staff-btn {
+  height: 36px !important;
+  padding: 0 14px !important;
+  font-size: 12px !important;
+}
+
+/* Responsive */
+@media (max-width: 1100px) {
+  .topbar.mctiers-style {
+    flex-wrap: wrap;
+    height: auto !important;
+    min-height: 64px;
+    padding: 10px 14px !important;
+    gap: 10px !important;
+  }
+  .top-nav {
+    order: 3;
+    width: 100%;
+    margin-left: 0;
+  }
+  .topbar-right {
+    margin-left: auto;
+  }
+}
+
+@media (max-width: 720px) {
+  .topbar.mctiers-style {
+    display: grid !important;
+    grid-template-columns: 1fr auto;
+    gap: 10px !important;
+  }
+  .top-nav {
+    order: 3;
+    grid-column: 1 / -1;
+    width: 100%;
+    overflow-x: auto;
+  }
+  .topbar-right {
+    grid-column: 1 / -1;
+    flex-wrap: wrap;
+    width: 100%;
+  }
+  .topbar.mctiers-style .platform-filters {
+    order: 1;
+    width: 100%;
+  }
+  .topbar.mctiers-style .search {
+    flex: 1;
+    min-width: 0 !important;
+  }
+}

@@ -1,29 +1,27 @@
-NovaKitPVP V21.3 Update (important fix)
-=======================================
+NovaKitPVP V22 Update
+=====================
 
-Problem found:
-v11.js was forcing every player to always show 10 slots and
-filling empty ones with "–". It also reset the order, which
-broke active-left / retired-right sorting.
+Changes:
+1. Top navigation now closer to mctiers style
+   - Rankings / Tournament / Discord links
+   - "Discord" instead of "Join Discord"
+   - Platform filters [Full Tierlist] [Java Only] [Bedrock Only] on the right
+2. Previous fixes still included:
+   - No more empty "–" tier slots (v11.js disabled)
+   - Active tiers on the left, retired on the right
+   - Colored tier badges
+   - Denser overall rows
 
-This update:
-- Disables the old v11.js behaviour
-- Keeps denser layout + colored badges (v21.css)
-- Keeps correct MCTiers logic in app.js:
-  • Active tiers on the LEFT
-  • Retired tiers on the RIGHT
-  • Best → worst within each group
-  • Only real tiers are shown (no empty circles)
-
-Files to upload:
-- v11.js       ← important (stops the empty slots)
-- v21.css
+Files to upload (drag all into NovaKitPVP-Online):
 - index.html
+- v11.js
+- v21.css
+- v22.css
 - app.js
 
-How to install:
-1. Download & unzip
+Steps:
+1. Unzip
 2. Go to GitHub → NovaKitPVP-Online
-3. Drag all 4 files in
+3. Drag the 5 files in
 4. Commit / Save
-5. Wait for Vercel, then hard-refresh the site (Ctrl+Shift+R)
+5. Wait for Vercel, then hard-refresh (Ctrl+Shift+R)
