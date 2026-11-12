@@ -1,3 +1,5 @@
+import { loadNovaAssets } from './nova-assets.js';
+import { cachePublicData, getPublicData, showOfflineNotice } from './nova-public-cache.js';
 import { getSupabase } from './supabase-loader.js';
 import { GAMEMODES, DEFAULT_ASSETS, assetValue, iconMarkup, headImg, bindHeadFallbacks, esc } from './site-config.js';
 
@@ -694,11 +696,21 @@ async function load(){
     const [playersRes,bracketsRes,assetsRes]=await Promise.all([
       supabase.from('players').select('id,name,avatar_url,minecraft_uuid').order('name'),
       supabase.from('tournament_brackets').select('gamemode,bracket_size,seeds,winners,started,revision,updated_at'),
-      supabase.from('site_assets').select('asset_key,asset_value')
+      loadNovaAssets(supabase)
     ]);
 
-    if(playersRes.error)throw playersRes.error;
-    if(bracketsRes.error)throw bracketsRes.error;
+    let publicOffline=false;
+    if(playersRes.error||bracketsRes.error){
+      const p=getPublicData('tournament-players'),b=getPublicData('tournament-brackets');
+      if((playersRes.error&&!p)||(bracketsRes.error&&!b))throw (playersRes.error||bracketsRes.error);
+      if(playersRes.error)playersRes.data=p.data;
+      if(bracketsRes.error)bracketsRes.data=b.data;
+      publicOffline=true;
+      showOfflineNotice('Supabase is temporarily restricted. Showing saved read-only tournament information.');
+    }else{
+      cachePublicData('tournament-players',playersRes.data||[]);
+      cachePublicData('tournament-brackets',bracketsRes.data||[]);
+    }
 
     players=playersRes.data||[];
     playerById=new Map(players.map(p=>[String(p.id),p]));
@@ -714,7 +726,7 @@ async function load(){
 
     renderNav();
     renderAll();
-    subscribe();
+    if(!publicOffline)subscribe();
   }catch(e){
     console.error(e);
     $('#bracketViewport').innerHTML=`<div class="empty"><b>Could not load tournament brackets.</b><br><br>${esc(e.message||e)}</div>`;

@@ -1,3 +1,5 @@
+import { loadNovaAssets } from './nova-assets.js';
+import { cachePublicData, getPublicData, showOfflineNotice } from './nova-public-cache.js';
 import { getSupabase } from './supabase-loader.js';
 import { GAMEMODES, ACTIVE_TIERS, POINTS, DEFAULT_ASSETS, totalPoints, rankFor, headImg, bodyImg, bindHeadFallbacks, iconMarkup, assetValue, esc, tierSortValue, scoreTier } from './site-config.js';
 
@@ -104,13 +106,18 @@ async function load(){
     supabase=await getSupabase();
     const [playersRes,assetsRes]=await Promise.all([
       supabase.from('players').select('id,name,region,avatar_url,minecraft_uuid,created_at,updated_at,player_tiers(id,gamemode,active_tier,peak_tier,retired_tier,updated_at)'),
-      supabase.from('site_assets').select('asset_key,asset_value')
+      loadNovaAssets(supabase)
     ]);
-    if(playersRes.error)throw playersRes.error;
+    let publicOffline=false;
+    if(playersRes.error){
+      const snapshot=getPublicData('players');
+      if(!snapshot||!Array.isArray(snapshot.data))throw playersRes.error;
+      players=snapshot.data; publicOffline=true;
+      showOfflineNotice('Supabase is temporarily restricted. Showing your last saved rankings (read-only).');
+    }else{players=playersRes.data||[];cachePublicData('players',players)}
     if(assetsRes.error)console.warn(assetsRes.error);
-    players=playersRes.data||[];
     assets=rowsToAssets(assetsRes.data);
-    applyBrand();applyDiscord();renderNav();render();subscribe();
+    applyBrand();applyDiscord();renderNav();render();if(!publicOffline)subscribe();
   }catch(e){console.error(e);$('#content').innerHTML=`<div class="empty"><b>NovaKitPVP is being configured.</b><br><br>${esc(e.message||e)}</div>`}
 }
 function subscribe(){
@@ -127,7 +134,7 @@ function refreshPlayers(){clearTimeout(refreshTimer);refreshTimer=setTimeout(asy
   const {data}=await supabase.from('players').select('id,name,region,avatar_url,minecraft_uuid,created_at,updated_at,player_tiers(id,gamemode,active_tier,peak_tier,retired_tier,updated_at)');
   if(data){players=data;render()}
 },250)}
-async function refreshAssets(){const {data}=await supabase.from('site_assets').select('asset_key,asset_value');if(data){assets=rowsToAssets(data);applyBrand();applyDiscord();renderNav();render()}}
+async function refreshAssets(){const {data}=await loadNovaAssets(supabase,{force:true});if(data){assets=rowsToAssets(data);applyBrand();applyDiscord();renderNav();render()}}
 function renderNav(){
   const overallBtn = `<button class="kit-tab ${currentMode==='overall'?'active':''}" data-mode="overall"><span class="kit-tab-icon">🏆</span><span class="kit-tab-label">Overall</span></button>`;
   const modeBtns = GAMEMODES.map(g=>`<button class="kit-tab ${currentMode===g.id?'active':''}" data-mode="${g.id}"><span class="kit-tab-icon">${modeIcon(g)}</span><span class="kit-tab-label">${esc(g.name)}</span></button>`).join('');

@@ -46,10 +46,25 @@ export function rankFor(points,assets={}){
 export function tierSortValue(tier){ const i=ACTIVE_TIERS.indexOf(tier); return i<0?999:i; }
 export function assetValue(assets,key){return assets?.[key] || DEFAULT_ASSETS[key] || '';}
 export function isImageIcon(value){return /^(https?:\/\/|data:image\/)/i.test(String(value||'').trim());}
+// A single local object URL is reused for every appearance of an original animated/image icon.
+const novaIconObjects = new Map();
+function novaImageSource(value) {
+  if (!value.startsWith('data:image/') || value.length < 4096) return value;
+  if (novaIconObjects.has(value)) return novaIconObjects.get(value);
+  try {
+    const comma = value.indexOf(',');
+    const mime = value.slice(5, value.indexOf(';'));
+    const binary = atob(value.slice(comma+1));
+    const bytes = new Uint8Array(binary.length);
+    for(let i=0;i<binary.length;i++) bytes[i]=binary.charCodeAt(i);
+    const objectUrl = URL.createObjectURL(new Blob([bytes],{type:mime}));
+    novaIconObjects.set(value,objectUrl); return objectUrl;
+  } catch { return value; }
+}
 export function iconMarkup(value,className='asset-icon'){
   value=String(value||'').trim();
   if(!value) return '';
-  return isImageIcon(value)?`<img class="${esc(className)}" src="${esc(value)}" alt="">`:`<span class="${esc(className)}">${esc(value)}</span>`;
+  return isImageIcon(value)?`<img class="${esc(className)}" src="${esc(novaImageSource(value))}" decoding="async" alt="">`:`<span class="${esc(className)}">${esc(value)}</span>`;
 }
 
 export function headUrls(player,size=64){
